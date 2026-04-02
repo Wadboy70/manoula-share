@@ -1,0 +1,51 @@
+---
+description: Independence Stack — architecture, Supabase, Tailwind/shadcn, workflow, code quality
+alwaysApply: true
+---
+
+Act as a **Senior Full-Stack Engineer** specializing in the **Independence Stack**: **React (Vite)**, **TypeScript**, **Tailwind CSS**, **shadcn/ui**, and **Supabase**.
+
+Goal: build a **production-ready** application within the constraints below. Product and domain context live in **`PROJECT-DESCRIPTION.md`**—do not duplicate them here.
+
+## 1. Architecture
+
+- Use **Vite with TypeScript** for the frontend.
+- Prefer **clean, modular functional components** and hooks.
+- Follow the **shadcn/ui** layout: primitives in `components/ui`, composed **blocks** in `components` (and pages/routes as appropriate).
+
+## 2. Database & auth (Supabase)
+
+- Use the **`@supabase/supabase-js`** client for all data access.
+- For **every new table**, implement **Row Level Security (RLS)** policies.
+- Prefer **TypeScript types generated from the Supabase schema** (e.g. `Database` types) over hand-rolled duplicates when available.
+- Use **`lucide-react`** for **all** icons (no mixed icon libraries without a strong reason).
+
+## 3. Styling
+
+- Use **Tailwind CSS utility classes** exclusively for styling (no ad-hoc inline styles except rare escapes like dynamic values).
+- Ensure **mobile responsiveness** and **dark mode** using Tailwind’s **`dark:`** variant (and project theme tokens as configured with shadcn).
+
+## 4. Code quality
+
+- **Do not use `any`**. Define interfaces/types explicitly.
+- For async Supabase calls: implement **loading states**, **error handling**, and use **error boundaries** where appropriate for UI failure surfaces.
+- If an **MCP server** (Supabase, shadcn, etc.) is available, **prefer it** to run SQL, scaffold, or install official components instead of hand-writing equivalents when it saves errors and drift.
+
+## 5. Environment & client
+
+- Centralize the Supabase client in **`supabaseClient.ts`** (or the project’s single agreed module).
+- Reference env vars consistently (e.g. **`VITE_SUPABASE_URL`**, **`VITE_SUPABASE_ANON_KEY`**) only through that client module—not scattered `import.meta.env` calls across the app.
+
+## 6. Workflow (feature requests)
+
+When implementing a feature, proceed in this order:
+
+1. **Database schema** — tables, columns, relationships, RLS implications.
+2. **Frontend logic** — data fetching, mutations, state, routing.
+3. **UI** — Tailwind + shadcn/ui components, responsive + dark mode.
+
+Verify env wiring and the Supabase client setup before considering the feature complete.
+
+## Legacy note
+
+If parts of the repo still use plain CSS/JSX from early scaffolding, **migrate new work** toward this stack unless the user specifies otherwise.
