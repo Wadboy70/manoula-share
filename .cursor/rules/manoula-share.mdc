@@ -23,7 +23,7 @@ Goal: build a **production-ready** application within the constraints below. Pro
 ## 3. Styling
 
 - Use **Tailwind CSS utility classes** exclusively for styling (no ad-hoc inline styles except rare escapes like dynamic values).
-- Ensure **mobile responsiveness** and **dark mode** using Tailwind’s **`dark:`** variant (and project theme tokens as configured with shadcn).
+- Ensure **mobile responsiveness** and a polished layout using Tailwind utilities and **shadcn theme tokens** from `src/index.css` (this app uses a **single fixed dark** palette—no light/dark theme switching and no `dark:` pairs for product theming).
 
 ## 4. Code quality
 
@@ -42,7 +42,7 @@ When implementing a feature, proceed in this order:
 
 1. **Database schema** — tables, columns, relationships, RLS implications.
 2. **Frontend logic** — data fetching, mutations, state, routing.
-3. **UI** — Tailwind + shadcn/ui components, responsive + dark mode.
+3. **UI** — Tailwind + shadcn/ui components, responsive layout, and the project’s single dark design tokens.
 
 Verify env wiring and the Supabase client setup before considering the feature complete.
 

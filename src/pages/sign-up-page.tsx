@@ -62,8 +62,8 @@ export function SignUpPage() {
   }
 
   return (
-    <div className="font-body bg-background flex min-h-svh flex-col items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md shadow-md">
+    <div className="font-body flex min-h-svh flex-col items-center justify-center bg-[#1a1a1a] px-4 py-12">
+      <Card className="w-full max-w-md border-white/10 shadow-md">
         <CardHeader>
           <CardTitle className="font-heading text-xl">Create an account</CardTitle>
           <CardDescription>

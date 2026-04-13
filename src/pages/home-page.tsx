@@ -122,25 +122,25 @@ export function HomePage() {
       {/* Services / specialties */}
       <section
         id="specialties"
-        className="border-y bg-white py-16 md:py-24 dark:bg-zinc-950"
+        className="border-y border-white/10 bg-zinc-950 py-16 md:py-24"
         aria-labelledby="specialties-heading"
       >
         <div className="mx-auto max-w-6xl px-4 md:px-6">
           <div className="mx-auto max-w-2xl text-center">
             <h2
               id="specialties-heading"
-              className="font-brand text-3xl font-medium tracking-tight text-black md:text-4xl dark:text-white"
+              className="font-brand text-3xl font-medium tracking-tight text-white md:text-4xl"
             >
               Our services
             </h2>
-            <p className="font-body mt-4 text-lg text-black/70 dark:text-zinc-300">
+            <p className="font-body mt-4 text-lg text-zinc-300">
               Explore categories from our network of certified professionals.
             </p>
           </div>
           <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {specialties.map((item) => (
               <li key={item.title}>
-                <Card className="h-full border-black/10 shadow-none transition-shadow hover:shadow-md dark:border-white/10">
+                <Card className="h-full border-white/10 shadow-none transition-shadow hover:shadow-md">
                   <CardHeader>
                     <CardTitle className="font-brand text-lg font-medium">
                       {item.title}
@@ -159,7 +159,7 @@ export function HomePage() {
       {/* How it works */}
       <section
         id="how-it-works"
-        className="bg-[#fafafa] py-16 md:py-24 dark:bg-zinc-900"
+        className="bg-zinc-900 py-16 md:py-24"
         aria-labelledby="how-heading"
       >
         <div className="mx-auto max-w-6xl px-4 md:px-6">
@@ -177,10 +177,10 @@ export function HomePage() {
           <ol className="mt-12 grid gap-4 md:grid-cols-2">
             {steps.map((item) => (
               <li key={item.step}>
-                <Card className="h-full border-black/10 bg-white shadow-sm dark:border-white/10 dark:bg-zinc-950">
+                <Card className="h-full border-white/10 bg-zinc-950 shadow-sm">
                   <CardContent className="flex gap-4 pt-6">
                     <span
-                      className="font-brand bg-black/5 text-foreground flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold dark:bg-white/10"
+                      className="font-brand bg-white/10 text-foreground flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
                       aria-hidden
                     >
                       {item.step}
@@ -249,14 +249,14 @@ export function HomePage() {
         className="mx-auto max-w-6xl px-4 py-16 md:py-20"
         aria-labelledby="pro-heading"
       >
-        <div className="relative overflow-hidden border border-black/10 bg-[#f5f5f5] px-6 py-12 text-center md:px-12 dark:border-white/10 dark:bg-zinc-900">
+        <div className="relative overflow-hidden border border-white/10 bg-zinc-900 px-6 py-12 text-center md:px-12">
           <h2
             id="pro-heading"
             className="font-brand text-2xl font-medium md:text-3xl"
           >
             Grow your practice with Manoula
           </h2>
-          <p className="font-body mx-auto mt-4 max-w-xl text-pretty text-lg text-black/80 dark:text-zinc-300">
+          <p className="font-body mx-auto mt-4 max-w-xl text-pretty text-lg text-zinc-300">
             Manage your public profile, services, availability, and bookings in
             one dashboard—built for certified maternal wellness professionals.
           </p>
