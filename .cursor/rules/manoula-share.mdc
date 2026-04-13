@@ -46,6 +46,18 @@ When implementing a feature, proceed in this order:
 
 Verify env wiring and the Supabase client setup before considering the feature complete.
 
+## 7. Node version (`.nvmrc`)
+
+Before running **`node`**, **`npm`**, **`npx`**, **`pnpm`**, **`yarn`**, or any script that depends on them (e.g. **`vite`**, **`eslint`** via `npm run`), **read the repo root [`.nvmrc`](.nvmrc)** and ensure the command uses that exact version.
+
+- **Prefer** running through a version manager so the pinned version is active:
+  - **fnm:** `fnm use` (in project dir) then the command, or one-shot: `fnm exec -- npm run …`
+  - **nvm (macOS/Linux/Git Bash):** `nvm use` (reads `.nvmrc` when `use` is run in the project directory) then the command
+  - **nvm-windows:** read `.nvmrc` and run `nvm use <version>` in the same shell session before `npm`/`npx` (nvm-windows does not always auto-read `.nvmrc`)
+- If the manager is missing or `node -v` still mismatches after `use`, **tell the user** to install Node from `.nvmrc` or fix PATH—do not assume an old global Node is acceptable.
+
+The version in `.nvmrc` is authoritative; tooling (ESLint 9, Vite 8, etc.) is not supported on legacy Node (e.g. 14).
+
 ## Legacy note
 
 If parts of the repo still use plain CSS/JSX from early scaffolding, **migrate new work** toward this stack unless the user specifies otherwise.
