@@ -58,6 +58,18 @@ Before running **`node`**, **`npm`**, **`npx`**, **`pnpm`**, **`yarn`**, or any 
 
 The version in `.nvmrc` is authoritative; tooling (ESLint 9, Vite 8, etc.) is not supported on legacy Node (e.g. 14).
 
+## 8. Testing (Vitest + React Testing Library)
+
+- **Runner:** **Vitest** with **`environment: 'jsdom'`** (configured in `vite.config.ts`). Shared setup lives in **`src/test/setup.ts`** (`@testing-library/jest-dom/vitest` matchers and **`afterEach` cleanup** from `@testing-library/react` so mounted trees do not accumulate between tests).
+- **Imports:** Import **`describe`**, **`it`**, **`expect`**, **`vi`**, etc. from **`vitest`** explicitly (no Vitest `globals` mode) unless the project later standardizes otherwise.
+- **Layout:** **Colocate** unit tests as **`*.test.ts`** / **`*.test.tsx`** next to the module under **`src/`**. Put broader route or multi-surface checks under **`src/__tests__/`** (or a dedicated `src/integration/` folder if you introduce it—keep one convention per repo).
+- **Queries:** Prefer **RTL** accessible queries (**`getByRole`**, **`getByLabelText`**, …). Use **`@testing-library/user-event`** for interactions. When the UI repeats roles (e.g. multiple cards), scope with **`within(container)`**—e.g. resolve the card with **`container.querySelector('[data-slot="card"]')`** or another stable hook, then query inside it.
+- **Forms / HTML5 validation:** In jsdom, native **`required`** fields can block **`click`** on submit from firing **`onSubmit`**. To assert **client-side validation** paths, use **`fireEvent.submit(form)`** on the relevant **`<form>`** so React’s handler runs without relying on the browser’s constraint pipeline.
+- **Supabase in tests:** **`vi.mock('@/lib/supabaseClient')`** and define **`auth.signUp`** (and other methods) with **`vi.fn`**. Define the mock function inside **`vi.hoisted(() => …)`** so Vitest hoists it safely—**do not** call a helper imported from another module inside `vi.hoisted` in a way that hits the temporal dead zone. Prefer **`vi.fn(async () => ({ error: null }))`** (or realistic errors) inline in `vi.hoisted`, and use **`src/test/mocks/supabase.ts`** for **shared types / documentation**, not for code that must run inside the hoisted initializer.
+- **Router:** Wrap under-test trees with **`MemoryRouter`** and set **`initialEntries`** when routes matter. For full route tables, wrapping **`App`** is fine when imports stay lightweight.
+- **Scripts:** **`npm test`** (watch), **`npm run test:run`** (CI / one-shot), optional **`npm run test:coverage`**. CI should keep **`test:run`** (and lint) green; coverage **thresholds** are optional until the team adds them.
+- **E2E:** Prefer RTL + mocks for most flows; add **Playwright** (or similar) only when real-browser coverage is worth the maintenance cost.
+
 ## Legacy note
 
 If parts of the repo still use plain CSS/JSX from early scaffolding, **migrate new work** toward this stack unless the user specifies otherwise.
