@@ -29,6 +29,7 @@ export function SignUpPage() {
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (successMessage) return
     setError(null)
     setSuccessMessage(null)
 
@@ -58,6 +59,34 @@ export function SignUpPage() {
 
     setSuccessMessage(
       'Check your email to confirm your account before signing in.',
+    )
+  }
+
+  if (successMessage) {
+    return (
+      <div className="font-body flex min-h-svh flex-col items-center justify-center bg-[#1a1a1a] px-4 py-12">
+        <Card className="w-full max-w-md border-white/10 shadow-md">
+          <CardContent className="pt-6 text-center">
+            <p
+              role="status"
+              aria-live="polite"
+              className="text-muted-foreground text-sm text-pretty"
+            >
+              {successMessage}
+            </p>
+          </CardContent>
+          <CardFooter className="bg-transparent pt-2 pb-6">
+            <p className="text-muted-foreground w-full text-center text-sm">
+              <Link
+                to="/"
+                className="hover:text-foreground underline-offset-4 hover:underline"
+              >
+                Back to home
+              </Link>
+            </p>
+          </CardFooter>
+        </Card>
+      </div>
     )
   }
 
@@ -149,11 +178,6 @@ export function SignUpPage() {
                 aria-live="polite"
               >
                 {error}
-              </p>
-            ) : null}
-            {successMessage ? (
-              <p className="text-muted-foreground text-sm" aria-live="polite">
-                {successMessage}
               </p>
             ) : null}
           </CardContent>
