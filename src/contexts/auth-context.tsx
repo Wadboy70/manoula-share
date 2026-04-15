@@ -34,6 +34,16 @@ function readMetadataName(
   return trimmed.length > 0 ? trimmed : null
 }
 
+/** Matches migration backfill default when `country_code` is absent. */
+function readMetadataCountryCode(user: User): string {
+  const metadata = user.user_metadata
+  if (!metadata || typeof metadata !== 'object') return 'NG'
+  const value = (metadata as Record<string, unknown>).country_code
+  if (typeof value !== 'string') return 'NG'
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : 'NG'
+}
+
 async function fetchUserRow(authUser: User): Promise<AppUser | null> {
   const { data, error } = await supabase
     .from('users')
@@ -74,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: authUser.email ?? null,
         first_name: readMetadataName(authUser, 'first_name'),
         last_name: readMetadataName(authUser, 'last_name'),
+        country_code: readMetadataCountryCode(authUser),
       }
 
       const { error } = await supabase.from('users').insert(recoveryPayload)
