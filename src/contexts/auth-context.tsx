@@ -38,7 +38,7 @@ async function fetchUserRow(authUser: User): Promise<AppUser | null> {
   const { data, error } = await supabase
     .from('users')
     .select(
-      'id,created_at,auth_user_id,first_name,last_name,email,is_professional,profile_photo_url,bio,specialty,is_profile_complete,is_searchable',
+      'id,created_at,auth_user_id,first_name,last_name,email,is_professional,profile_photo_url,bio,is_profile_complete,is_searchable,is_public_searchable,country_code,location_locality,location_region,postal_code,service_area,rating_avg,rating_count',
     )
     .eq('auth_user_id', authUser.id)
     .maybeSingle()
