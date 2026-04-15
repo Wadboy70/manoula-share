@@ -61,7 +61,7 @@ export function HomePage() {
             className="mt-10 flex flex-wrap items-center justify-center gap-4"
           >
             <a
-              href="#specialties"
+              href="/search"
               className={cn(
                 buttonVariants({ size: 'lg' }),
                 'rounded-none bg-[#e5e5e5] px-8 text-black hover:bg-white',
@@ -70,7 +70,7 @@ export function HomePage() {
               Find support
             </a>
             <a
-              href="/signup/professional"
+              href="/signup"
               className={cn(
                 buttonVariants({ variant: 'outline', size: 'lg' }),
                 'rounded-none border-white/80 bg-transparent text-white hover:bg-white/10',
