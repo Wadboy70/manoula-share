@@ -18,6 +18,7 @@ Goal: build a **production-ready** application within the constraints below. Pro
 - Use the **`@supabase/supabase-js`** client for all data access.
 - For **every new table**, implement **Row Level Security (RLS)** policies.
 - Prefer **TypeScript types generated from the Supabase schema** (e.g. `Database` types) over hand-rolled duplicates when available.
+- **Migrations and hosted DBs:** Files in `supabase/migrations/` are not applied to **staging/production** until you run the Supabase CLI against the linked project (e.g. `supabase link` then `supabase db push`). Whenever you add or edit a migration, **remind the user** before closing the task: confirm whether remote has been updated (or that they will run push separately), and use a non-prod project first when unsure. After remote schema changes, regenerate app types if needed (e.g. `supabase gen types typescript --linked` into `src/types/database.ts`).
 - Use **`lucide-react`** for **all** icons (no mixed icon libraries without a strong reason).
 
 ## 3. Styling

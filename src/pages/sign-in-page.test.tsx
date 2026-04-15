@@ -18,24 +18,33 @@ const signInWithPasswordMock = vi.hoisted(() =>
   ),
 )
 
-const loadAppUserMock = vi.hoisted(() =>
-  vi.fn(
-    async (): Promise<AppUser | null> => ({
-      id: 1,
-      created_at: new Date().toISOString(),
-      auth_user_id: 'auth-id-1',
-      first_name: 'Jane',
-      last_name: 'Doe',
-      email: 'jane@example.com',
-      is_professional: false,
-      profile_photo_url: null,
-      bio: null,
-      specialty: null,
-      is_profile_complete: false,
-      is_searchable: false,
-    }),
-  ),
-)
+const { baseAppUser, loadAppUserMock } = vi.hoisted(() => {
+  const baseAppUser = (): AppUser => ({
+    id: 1,
+    created_at: new Date().toISOString(),
+    auth_user_id: 'auth-id-1',
+    first_name: 'Jane',
+    last_name: 'Doe',
+    email: 'jane@example.com',
+    is_professional: false,
+    profile_photo_url: null,
+    bio: null,
+    is_profile_complete: false,
+    is_searchable: false,
+    is_public_searchable: false,
+    country_code: 'US',
+    location_locality: null,
+    location_region: null,
+    postal_code: null,
+    service_area: null,
+    rating_avg: 0,
+    rating_count: 0,
+  })
+  const loadAppUserMock = vi.fn(
+    async (): Promise<AppUser | null> => baseAppUser(),
+  )
+  return { baseAppUser, loadAppUserMock }
+})
 
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
@@ -71,20 +80,7 @@ describe('SignInPage', () => {
       data: { user: { id: 'auth-id-1' } },
       error: null,
     })
-    loadAppUserMock.mockResolvedValue({
-      id: 1,
-      created_at: new Date().toISOString(),
-      auth_user_id: 'auth-id-1',
-      first_name: 'Jane',
-      last_name: 'Doe',
-      email: 'jane@example.com',
-      is_professional: false,
-      profile_photo_url: null,
-      bio: null,
-      specialty: null,
-      is_profile_complete: false,
-      is_searchable: false,
-    })
+    loadAppUserMock.mockResolvedValue(baseAppUser())
   })
 
   it('shows inline validation errors', async () => {
@@ -116,18 +112,13 @@ describe('SignInPage', () => {
 
   it('redirects professionals to /dashboard on successful sign in', async () => {
     loadAppUserMock.mockResolvedValue({
+      ...baseAppUser(),
       id: 2,
-      created_at: new Date().toISOString(),
       auth_user_id: 'auth-id-2',
       first_name: 'Pro',
       last_name: 'User',
       email: 'pro@example.com',
       is_professional: true,
-      profile_photo_url: null,
-      bio: null,
-      specialty: null,
-      is_profile_complete: false,
-      is_searchable: false,
     })
     const user = userEvent.setup()
     renderSignIn()
