@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import { SignInPage } from '@/pages/sign-in-page'
+import { SearchPage } from '@/pages/search-page'
 import type { AppUser } from '@/types/auth'
 
 const signInWithPasswordMock = vi.hoisted(() =>
@@ -57,6 +58,8 @@ vi.mock('@/lib/supabaseClient', () => ({
 vi.mock('@/hooks/use-auth', () => ({
   useAuth: () => ({
     loadAppUser: loadAppUserMock,
+    session: null,
+    signOut: vi.fn(),
   }),
 }))
 
@@ -65,7 +68,7 @@ function renderSignIn() {
     <MemoryRouter initialEntries={['/signin']}>
       <Routes>
         <Route path="/signin" element={<SignInPage />} />
-        <Route path="/search" element={<p>Search page</p>} />
+        <Route path="/search" element={<SearchPage />} />
         <Route path="/dashboard" element={<p>Dashboard page</p>} />
       </Routes>
     </MemoryRouter>,
@@ -105,7 +108,7 @@ describe('SignInPage', () => {
     await user.click(screen.getByRole('button', { name: /^sign in$/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/search page/i)).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /^find support$/i })).toBeInTheDocument()
     })
     expect(loadAppUserMock).toHaveBeenCalledOnce()
   })
