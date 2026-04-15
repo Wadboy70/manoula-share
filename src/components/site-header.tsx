@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import { Button, buttonVariants } from '@/components/ui/button'
+import { useAuth } from '@/hooks/use-auth'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
@@ -43,6 +44,20 @@ function SearchField({ idPrefix }: { idPrefix: string }) {
 }
 
 export function SiteHeader() {
+  const navigate = useNavigate()
+  const { session, signOut } = useAuth()
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  async function onLogout() {
+    setLoggingOut(true)
+    try {
+      await signOut()
+    } finally {
+      setLoggingOut(false)
+      navigate('/')
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#1a1a1a] text-zinc-200">
       <div className="relative mx-auto flex min-h-[5.5rem] w-full max-w-[1400px] items-center justify-end px-6 sm:px-8 md:min-h-0 md:py-10 md:px-10 lg:justify-between lg:py-12 lg:px-14">
@@ -54,15 +69,40 @@ export function SiteHeader() {
         </Link>
 
         <div className="flex items-center gap-2 md:gap-4">
-          <Link
-            to="/signup"
-            className={cn(
-              buttonVariants({ size: 'lg' }),
-              'shrink-0 rounded-none bg-[#e5e5e5] px-8 text-black hover:bg-white',
-            )}
-          >
-            Sign up
-          </Link>
+          {session ? (
+            <Button
+              type="button"
+              size="lg"
+              onClick={() => {
+                void onLogout()
+              }}
+              disabled={loggingOut}
+              className="shrink-0 rounded-none bg-[#e5e5e5] px-8 text-black hover:bg-white"
+            >
+              {loggingOut ? 'Logging out...' : 'Logout'}
+            </Button>
+          ) : (
+            <>
+              <Link
+                to="/signin"
+                className={cn(
+                  buttonVariants({ size: 'lg', variant: 'outline' }),
+                  'shrink-0 rounded-none border-white/80 bg-transparent px-8 text-white hover:bg-white/10',
+                )}
+              >
+                Log in
+              </Link>
+              <Link
+                to="/signup"
+                className={cn(
+                  buttonVariants({ size: 'lg' }),
+                  'shrink-0 rounded-none bg-[#e5e5e5] px-8 text-black hover:bg-white',
+                )}
+              >
+                Sign up
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
