@@ -78,9 +78,10 @@ describe('SearchPage', () => {
 
     renderSearchPage()
     expect(screen.getByText('Ada Nwosu')).toBeInTheDocument()
-    expect(
-      screen.getByRole('img', { name: /ada nwosu profile photo/i }),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /view profile for ada nwosu/i })).toHaveAttribute(
+      'href',
+      '/professionals/1',
+    )
     expect(screen.getByRole('img', { name: /rating 5.0 out of 5, 10 reviews/i })).toBeInTheDocument()
     expect(screen.getByText('Lactation Consultant')).toBeInTheDocument()
     expect(screen.getByText('Nutrition')).toBeInTheDocument()

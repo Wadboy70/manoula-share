@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 import { SiteHeader } from '@/components/site-header'
 import { RatingWithScore } from '@/components/rating-with-score'
 import { useSearchResults } from '@/features/search/use-search-results'
@@ -11,6 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 function renderServiceArea(card: SearchCard): string {
   const area = card.serviceArea?.trim()
@@ -145,41 +148,51 @@ export function SearchPage() {
                     <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2" aria-live="polite">
                       {results.map((card) => (
                         <li key={card.professionalId}>
-                          <article className="overflow-hidden rounded-lg border border-white/10 bg-white/5 text-left">
-                            {card.profilePhotoUrl ? (
-                              <img
-                                src={card.profilePhotoUrl}
-                                alt={`${renderName(card)} profile photo`}
-                                className="aspect-[4/5] w-full object-cover object-top"
-                              />
-                            ) : (
-                              <div className="bg-input/30 aspect-[4/5] w-full" aria-hidden="true" />
+                          <Link
+                            to={`/professionals/${card.professionalId}`}
+                            aria-label={`View profile for ${renderName(card)}`}
+                            className={cn(
+                              'block overflow-hidden rounded-lg border border-white/10 bg-white/5 text-left transition-colors',
+                              'hover:border-white/20 hover:bg-white/10',
+                              'focus-visible:ring-ring focus-visible:ring-offset-background outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
                             )}
-                            <div className="flex min-w-0 flex-col gap-3 p-4">
-                              <p className="font-heading text-base text-white">{renderName(card)}</p>
-                              <RatingWithScore
-                                ratingAvg={card.ratingAvg}
-                                ratingCount={card.ratingCount}
-                              />
-                              <ul className="flex flex-wrap gap-2">
-                                {card.specialties.length > 0 ? (
-                                  card.specialties.map((specialty) => (
-                                    <li
-                                      key={specialty}
-                                      className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-sm font-medium text-white"
-                                    >
-                                      {specialty}
-                                    </li>
-                                  ))
-                                ) : (
-                                  <li className="text-muted-foreground text-sm">Specialties coming soon</li>
-                                )}
-                              </ul>
-                              <p className="text-muted-foreground text-sm">
-                                {renderServiceArea(card)}
-                              </p>
-                            </div>
-                          </article>
+                          >
+                            <article>
+                              {card.profilePhotoUrl ? (
+                                <img
+                                  src={card.profilePhotoUrl}
+                                  alt=""
+                                  className="aspect-[4/5] w-full object-cover object-top"
+                                />
+                              ) : (
+                                <div className="bg-input/30 aspect-[4/5] w-full" aria-hidden="true" />
+                              )}
+                              <div className="flex min-w-0 flex-col gap-3 p-4">
+                                <p className="font-heading text-base text-white">{renderName(card)}</p>
+                                <RatingWithScore
+                                  ratingAvg={card.ratingAvg}
+                                  ratingCount={card.ratingCount}
+                                />
+                                <ul className="flex flex-wrap gap-2">
+                                  {card.specialties.length > 0 ? (
+                                    card.specialties.map((specialty) => (
+                                      <li
+                                        key={specialty}
+                                        className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-sm font-medium text-white"
+                                      >
+                                        {specialty}
+                                      </li>
+                                    ))
+                                  ) : (
+                                    <li className="text-muted-foreground text-sm">Specialties coming soon</li>
+                                  )}
+                                </ul>
+                                <p className="text-muted-foreground text-sm">
+                                  {renderServiceArea(card)}
+                                </p>
+                              </div>
+                            </article>
+                          </Link>
                         </li>
                       ))}
                     </ul>
