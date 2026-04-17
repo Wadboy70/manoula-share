@@ -15,7 +15,7 @@ begin
     nullif(trim(new.raw_user_meta_data ->> 'last_name'), ''),
     coalesce(
       nullif(trim(new.raw_user_meta_data ->> 'country_code'), ''),
-      'NG'
+      'GB'
     )
   );
   return new;

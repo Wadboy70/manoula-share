@@ -31,7 +31,7 @@ end $$;
 
 -- Backfill country code before enforcing NOT NULL.
 update public.users
-set country_code = coalesce(nullif(trim(country_code), ''), 'NG')
+set country_code = coalesce(nullif(trim(country_code), ''), 'GB')
 where country_code is null
    or trim(country_code) = '';
 
