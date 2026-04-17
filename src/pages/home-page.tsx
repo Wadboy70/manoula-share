@@ -43,7 +43,7 @@ export function HomePage() {
           style={{ backgroundImage: `url(${heroImageUrl})` }}
         />
         <div
-          className="absolute inset-0 bg-black/45"
+          className="absolute inset-0 z-[1] bg-black/80"
           aria-hidden
         />
         <div className="relative z-10 max-w-5xl px-6 text-center">
