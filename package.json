@@ -5,9 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:local": "vite",
+    "dev:staging": "node scripts/run-with-env.mjs .env.staging vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "seed:local": "supabase db query --local --file supabase/seeds/local_search_seed.sql",
+    "seed:local:reset": "supabase db reset --local && supabase db query --local --file supabase/seeds/local_search_seed.sql",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"

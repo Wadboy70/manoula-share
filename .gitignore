@@ -16,6 +16,9 @@ dist-ssr
 .env
 .env.*
 !.env.example
+# Explicitly document local/staging env targets
+.env.local
+.env.staging
 
 # Editor directories and files
 .vscode/*
