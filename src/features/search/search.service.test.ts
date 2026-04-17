@@ -25,6 +25,7 @@ describe('fetchSearchCards', () => {
           first_name: 'Ada',
           last_name: 'N',
           profile_photo_url: null,
+          service_area: 'In-person and virtual',
           location_locality: 'Lagos',
           location_region: 'Lagos',
           country_code: 'NG',
@@ -39,12 +40,16 @@ describe('fetchSearchCards', () => {
     const cards = await fetchSearchCards()
 
     expect(fromMock).toHaveBeenCalledWith('professional_search_cards_enriched')
+    expect(selectMock).toHaveBeenCalledWith(
+      expect.stringContaining('service_area'),
+    )
     expect(cards).toEqual([
       {
         professionalId: 12,
         firstName: 'Ada',
         lastName: 'N',
         profilePhotoUrl: null,
+        serviceArea: 'In-person and virtual',
         locationLocality: 'Lagos',
         locationRegion: 'Lagos',
         countryCode: 'NG',
@@ -63,6 +68,7 @@ describe('fetchSearchCards', () => {
           first_name: null,
           last_name: null,
           profile_photo_url: null,
+          service_area: null,
           location_locality: null,
           location_region: null,
           country_code: null,

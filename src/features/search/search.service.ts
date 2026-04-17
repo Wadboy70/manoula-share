@@ -6,7 +6,7 @@ export async function fetchSearchCards(): Promise<SearchCard[]> {
   const { data, error } = await supabase
     .from('professional_search_cards_enriched')
     .select(
-      'professional_id,first_name,last_name,profile_photo_url,location_locality,location_region,country_code,specialties,rating_avg,rating_count',
+      'professional_id,first_name,last_name,profile_photo_url,service_area,location_locality,location_region,country_code,specialties,rating_avg,rating_count',
     )
 
   if (error) {

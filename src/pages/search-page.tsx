@@ -1,4 +1,5 @@
 import { SiteHeader } from '@/components/site-header'
+import { RatingWithScore } from '@/components/rating-with-score'
 import { useSearchResults } from '@/features/search/use-search-results'
 import type { SearchCard } from '@/features/search/search.types'
 import { Button } from '@/components/ui/button'
@@ -11,14 +12,9 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 
-function renderLocation(card: SearchCard): string {
-  const segments = [
-    card.locationLocality,
-    card.locationRegion,
-    card.countryCode,
-  ].filter((value): value is string => Boolean(value))
-
-  return segments.length > 0 ? segments.join(', ') : 'Location coming soon'
+function renderServiceArea(card: SearchCard): string {
+  const area = card.serviceArea?.trim()
+  return area && area.length > 0 ? area : 'Service area coming soon'
 }
 
 function renderName(card: SearchCard): string {
@@ -146,26 +142,41 @@ export function SearchPage() {
 
                 {!loading && !error && results.length > 0 ? (
                   <CardContent className="pt-0 pb-6">
-                    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2" aria-live="polite">
+                    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2" aria-live="polite">
                       {results.map((card) => (
                         <li key={card.professionalId}>
-                          <article className="flex gap-3 rounded-lg border border-white/10 bg-white/5 p-4 text-left">
+                          <article className="overflow-hidden rounded-lg border border-white/10 bg-white/5 text-left">
                             {card.profilePhotoUrl ? (
                               <img
                                 src={card.profilePhotoUrl}
                                 alt={`${renderName(card)} profile photo`}
-                                className="size-16 shrink-0 rounded-md object-cover ring-1 ring-white/10"
+                                className="aspect-[4/5] w-full object-cover object-top"
                               />
-                            ) : null}
-                            <div className="min-w-0 flex-1">
-                              <p className="font-heading text-sm text-white">{renderName(card)}</p>
-                              <p className="text-muted-foreground mt-1 text-xs">
-                                {renderLocation(card)}
-                              </p>
-                              <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
-                                {card.specialties.length > 0
-                                  ? card.specialties.join(' · ')
-                                  : 'Specialties coming soon'}
+                            ) : (
+                              <div className="bg-input/30 aspect-[4/5] w-full" aria-hidden="true" />
+                            )}
+                            <div className="flex min-w-0 flex-col gap-3 p-4">
+                              <p className="font-heading text-base text-white">{renderName(card)}</p>
+                              <RatingWithScore
+                                ratingAvg={card.ratingAvg}
+                                ratingCount={card.ratingCount}
+                              />
+                              <ul className="flex flex-wrap gap-2">
+                                {card.specialties.length > 0 ? (
+                                  card.specialties.map((specialty) => (
+                                    <li
+                                      key={specialty}
+                                      className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-sm font-medium text-white"
+                                    >
+                                      {specialty}
+                                    </li>
+                                  ))
+                                ) : (
+                                  <li className="text-muted-foreground text-sm">Specialties coming soon</li>
+                                )}
+                              </ul>
+                              <p className="text-muted-foreground text-sm">
+                                {renderServiceArea(card)}
                               </p>
                             </div>
                           </article>

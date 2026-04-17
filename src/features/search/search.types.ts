@@ -8,6 +8,7 @@ type SearchCardSelectRow = Pick<
   | 'first_name'
   | 'last_name'
   | 'profile_photo_url'
+  | 'service_area'
   | 'location_locality'
   | 'location_region'
   | 'country_code'
@@ -21,6 +22,7 @@ export type SearchCard = {
   firstName: string | null
   lastName: string | null
   profilePhotoUrl: string | null
+  serviceArea: string | null
   locationLocality: string | null
   locationRegion: string | null
   countryCode: string | null
@@ -37,6 +39,7 @@ export function toSearchCard(row: SearchCardSelectRow): SearchCard | null {
     firstName: row.first_name,
     lastName: row.last_name,
     profilePhotoUrl: row.profile_photo_url,
+    serviceArea: row.service_area,
     locationLocality: row.location_locality,
     locationRegion: row.location_region,
     countryCode: row.country_code,
