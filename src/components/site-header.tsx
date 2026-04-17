@@ -1,47 +1,9 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { Button, buttonVariants } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
-import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-
-function SearchField({ idPrefix }: { idPrefix: string }) {
-  const [query, setQuery] = useState('')
-
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-  }
-
-  return (
-    <form
-      role="search"
-      className="flex w-full items-center gap-2"
-      onSubmit={onSubmit}
-    >
-      <label htmlFor={`${idPrefix}-search`} className="sr-only">
-        Search providers or services
-      </label>
-      <Input
-        id={`${idPrefix}-search`}
-        type="search"
-        placeholder="Search providers…"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        autoComplete="off"
-        className="border-white/20 bg-white/10 text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-white/30"
-      />
-      <Button
-        type="submit"
-        size="sm"
-        variant="secondary"
-        className="shrink-0 bg-[#e5e5e5] text-black hover:bg-white"
-      >
-        Search
-      </Button>
-    </form>
-  )
-}
 
 export function SiteHeader() {
   const navigate = useNavigate()
@@ -104,10 +66,6 @@ export function SiteHeader() {
             </>
           )}
         </div>
-      </div>
-
-      <div className="border-t border-white/10 px-6 py-5 sm:px-8 lg:hidden">
-        <SearchField idPrefix="mobile-bar" />
       </div>
     </header>
   )
