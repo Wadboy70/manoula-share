@@ -1,21 +1,69 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { SearchCard } from '@/features/search/search.types'
-import { toSearchCard } from '@/features/search/search.types'
+import type { SearchCard, SearchCardsInvokePayload } from '@/features/search/search.types'
+
+function asNullableString(value: unknown): string | null {
+  if (value === null || value === undefined) return null
+  if (typeof value === 'string') return value
+  return null
+}
+
+function asNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined) return null
+  if (typeof value === 'number' && !Number.isNaN(value)) return value
+  return null
+}
+
+function parseSearchCard(entry: unknown): SearchCard | null {
+  if (typeof entry !== 'object' || entry === null) return null
+  const row = entry as Record<string, unknown>
+  if (typeof row.professionalId !== 'number') return null
+
+  const specialtiesRaw = row.specialties
+  const specialties = Array.isArray(specialtiesRaw)
+    ? specialtiesRaw.filter((item): item is string => typeof item === 'string')
+    : []
+
+  return {
+    professionalId: row.professionalId,
+    firstName: asNullableString(row.firstName),
+    lastName: asNullableString(row.lastName),
+    profilePhotoUrl: asNullableString(row.profilePhotoUrl),
+    serviceArea: asNullableString(row.serviceArea),
+    locationLocality: asNullableString(row.locationLocality),
+    locationRegion: asNullableString(row.locationRegion),
+    countryCode: asNullableString(row.countryCode),
+    specialties,
+    ratingAvg: asNullableNumber(row.ratingAvg),
+    ratingCount: asNullableNumber(row.ratingCount),
+  }
+}
+
+function parseSearchCardsInvokePayload(data: unknown): SearchCard[] {
+  if (typeof data !== 'object' || data === null || !('cards' in data)) {
+    throw new Error('Invalid search response shape')
+  }
+
+  const { cards } = data as SearchCardsInvokePayload
+  if (!Array.isArray(cards)) {
+    throw new Error('Invalid search response shape')
+  }
+
+  const parsed = cards.map(parseSearchCard)
+  if (parsed.some((card) => card === null)) {
+    throw new Error('Invalid search card in response')
+  }
+
+  return parsed as SearchCard[]
+}
 
 export async function fetchSearchCards(): Promise<SearchCard[]> {
-  const { data, error } = await supabase
-    .from('professional_search_cards_enriched')
-    .select(
-      'professional_id,first_name,last_name,profile_photo_url,service_area,location_locality,location_region,country_code,specialties,rating_avg,rating_count',
-    )
+  const { data, error } = await supabase.functions.invoke<SearchCardsInvokePayload>('search-cards', {
+    body: {},
+  })
 
   if (error) {
     throw error
   }
 
-  if (!data) {
-    return []
-  }
-
-  return data.map(toSearchCard).filter((card): card is SearchCard => card !== null)
+  return parseSearchCardsInvokePayload(data)
 }

@@ -1,6 +1,9 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { SiteHeader } from '@/components/site-header'
+import { fetchLocationSuggestions } from '@/features/search/location.service'
+import type { LocationSuggestion } from '@/features/search/location.types'
 import { RatingWithScore } from '@/components/rating-with-score'
 import { useSearchResults } from '@/features/search/use-search-results'
 import type { SearchCard } from '@/features/search/search.types'
@@ -14,6 +17,9 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+
+const LOCATION_DEBOUNCE_MS = 300
+const LOCATION_MIN_QUERY_LENGTH = 3
 
 function renderServiceArea(card: SearchCard): string {
   const area = card.serviceArea?.trim()
@@ -31,6 +37,62 @@ function renderName(card: SearchCard): string {
 
 export function SearchPage() {
   const { loading, error, results, retry } = useSearchResults()
+
+  const [locationInput, setLocationInput] = useState('')
+  const [debouncedLocationQuery, setDebouncedLocationQuery] = useState('')
+  const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([])
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [locationError, setLocationError] = useState<string | null>(null)
+  const [locationSuggestSuppressed, setLocationSuggestSuppressed] = useState(false)
+  const locationRequestIdRef = useRef(0)
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      setDebouncedLocationQuery(locationInput.trim())
+    }, LOCATION_DEBOUNCE_MS)
+    return () => {
+      window.clearTimeout(handle)
+    }
+  }, [locationInput])
+
+  useEffect(() => {
+    const trimmed = debouncedLocationQuery
+    if (trimmed.length < LOCATION_MIN_QUERY_LENGTH) {
+      setLocationSuggestions([])
+      setLocationError(null)
+      setLocationLoading(false)
+      return
+    }
+
+    if (locationSuggestSuppressed) {
+      setLocationSuggestions([])
+      setLocationError(null)
+      setLocationLoading(false)
+      return
+    }
+
+    const requestId = ++locationRequestIdRef.current
+    setLocationLoading(true)
+    setLocationError(null)
+
+    void (async () => {
+      try {
+        const next = await fetchLocationSuggestions(trimmed)
+        if (locationRequestIdRef.current === requestId) {
+          setLocationSuggestions(next)
+        }
+      } catch (err) {
+        if (locationRequestIdRef.current === requestId) {
+          setLocationSuggestions([])
+          setLocationError('Could not load location suggestions.')
+        }
+      } finally {
+        if (locationRequestIdRef.current === requestId) {
+          setLocationLoading(false)
+        }
+      }
+    })()
+  }, [debouncedLocationQuery, locationSuggestSuppressed])
 
   return (
     <div className="bg-background flex min-h-svh flex-col">
@@ -50,9 +112,9 @@ export function SearchPage() {
           <div className="grid flex-1 grid-cols-1 gap-8 lg:grid-cols-[minmax(260px,320px)_1fr] lg:items-start">
             <section
               aria-labelledby="search-filters-heading"
-              className="lg:sticky lg:top-6"
+              className="overflow-visible lg:sticky lg:top-6"
             >
-              <Card>
+              <Card className="overflow-visible">
                 <CardHeader>
                   <h2
                     id="search-filters-heading"
@@ -64,7 +126,7 @@ export function SearchPage() {
                     Narrow by specialty and location. More options coming soon.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col gap-4 pt-0">
+                <CardContent className="flex flex-col gap-4 overflow-visible pt-0">
                   <div className="flex flex-col gap-2">
                     <label
                       htmlFor="search-filter-specialty"
@@ -85,11 +147,55 @@ export function SearchPage() {
                     >
                       Location
                     </label>
-                    <Input
-                      id="search-filter-location"
-                      disabled
-                      placeholder="City or region"
-                    />
+                    <div className="relative overflow-visible">
+                      <Input
+                        id="search-filter-location"
+                        type="text"
+                        autoComplete="off"
+                        placeholder="City or region (min. 3 characters)"
+                        value={locationInput}
+                        onChange={(e) => {
+                          setLocationSuggestSuppressed(false)
+                          setLocationInput(e.target.value)
+                        }}
+                        aria-autocomplete="list"
+                        aria-expanded={locationSuggestions.length > 0}
+                        aria-controls="search-location-suggestions"
+                      />
+                      {locationSuggestions.length > 0 ? (
+                        <ul
+                          id="search-location-suggestions"
+                          role="listbox"
+                          className="border-input absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-lg border bg-[#1a1a1a] py-1 shadow-lg"
+                        >
+                          {locationSuggestions.map((suggestion) => (
+                            <li key={suggestion.id} role="presentation">
+                              <button
+                                type="button"
+                                role="option"
+                                className="hover:bg-input/50 w-full px-3 py-2 text-left text-sm text-white"
+                                onClick={() => {
+                                  setLocationInput(suggestion.label)
+                                  setLocationSuggestions([])
+                                  setLocationSuggestSuppressed(true)
+                                  queueMicrotask(() => {
+                                    document.getElementById('search-filter-location')?.blur()
+                                  })
+                                }}
+                              >
+                                {suggestion.label}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                    {locationLoading ? (
+                      <p className="text-muted-foreground text-xs">Searching locations…</p>
+                    ) : null}
+                    {locationError ? (
+                      <p className="text-destructive text-xs leading-relaxed">{locationError}</p>
+                    ) : null}
                   </div>
                   <div className="flex flex-col gap-2">
                     <label

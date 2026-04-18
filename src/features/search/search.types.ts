@@ -17,6 +17,11 @@ type SearchCardSelectRow = Pick<
   | 'rating_count'
 >
 
+/** JSON body from the `search-cards` Edge Function (camelCase cards). */
+export type SearchCardsInvokePayload = {
+  cards: SearchCard[]
+}
+
 export type SearchCard = {
   professionalId: number
   firstName: string | null

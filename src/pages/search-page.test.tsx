@@ -1,12 +1,13 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import { SearchPage } from '@/pages/search-page'
 
 const useSearchResultsMock = vi.hoisted(() => vi.fn())
 const signOutMock = vi.hoisted(() => vi.fn())
+const fetchLocationSuggestionsMock = vi.hoisted(() => vi.fn())
 
 vi.mock('@/features/search/use-search-results', () => ({
   useSearchResults: useSearchResultsMock,
@@ -19,6 +20,10 @@ vi.mock('@/hooks/use-auth', () => ({
   }),
 }))
 
+vi.mock('@/features/search/location.service', () => ({
+  fetchLocationSuggestions: fetchLocationSuggestionsMock,
+}))
+
 function renderSearchPage() {
   return render(
     <MemoryRouter>
@@ -28,6 +33,11 @@ function renderSearchPage() {
 }
 
 describe('SearchPage', () => {
+  beforeEach(() => {
+    fetchLocationSuggestionsMock.mockReset()
+    fetchLocationSuggestionsMock.mockResolvedValue([])
+  })
+
   it('shows loading state', () => {
     useSearchResultsMock.mockReturnValue({
       loading: true,
@@ -103,5 +113,73 @@ describe('SearchPage', () => {
     expect(screen.getByText(/could not load results/i)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /try again/i }))
     expect(retry).toHaveBeenCalledOnce()
+  })
+
+  it('does not fetch location suggestions until query has at least 3 characters after debounce', async () => {
+    useSearchResultsMock.mockReturnValue({
+      loading: false,
+      error: null,
+      retry: vi.fn(),
+      results: [],
+    })
+
+    renderSearchPage()
+    const locationInput = screen.getByRole('textbox', { name: /location/i })
+
+    fireEvent.change(locationInput, { target: { value: 'Lo' } })
+    await new Promise((resolve) => setTimeout(resolve, 350))
+
+    expect(fetchLocationSuggestionsMock).not.toHaveBeenCalled()
+  })
+
+  it('fetches location suggestions after debounce when query is at least 3 characters', async () => {
+    fetchLocationSuggestionsMock.mockResolvedValue([
+      { id: '1', label: 'Los Angeles, CA' },
+    ])
+    useSearchResultsMock.mockReturnValue({
+      loading: false,
+      error: null,
+      retry: vi.fn(),
+      results: [],
+    })
+
+    renderSearchPage()
+    const locationInput = screen.getByRole('textbox', { name: /location/i })
+
+    fireEvent.change(locationInput, { target: { value: 'Los' } })
+
+    await waitFor(
+      () => {
+        expect(fetchLocationSuggestionsMock).toHaveBeenCalledWith('Los')
+      },
+      { timeout: 2000 },
+    )
+
+    expect(await screen.findByRole('option', { name: /los angeles, ca/i })).toBeInTheDocument()
+  })
+
+  it('fills location input when a suggestion is chosen', async () => {
+    fetchLocationSuggestionsMock.mockResolvedValue([
+      { id: '1', label: 'Los Angeles, CA' },
+    ])
+    useSearchResultsMock.mockReturnValue({
+      loading: false,
+      error: null,
+      retry: vi.fn(),
+      results: [],
+    })
+
+    renderSearchPage()
+    const locationInput = screen.getByRole('textbox', { name: /location/i })
+
+    fireEvent.change(locationInput, { target: { value: 'Los' } })
+
+    await waitFor(() => {
+      expect(fetchLocationSuggestionsMock).toHaveBeenCalled()
+    })
+
+    fireEvent.click(screen.getByRole('option', { name: /los angeles, ca/i }))
+
+    expect(locationInput).toHaveValue('Los Angeles, CA')
   })
 })
