@@ -34,6 +34,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      professional_search_profiles: {
+        Row: {
+          country_code: string
+          geocoded_at: string | null
+          is_active: boolean
+          is_approved: boolean
+          is_profile_complete: boolean
+          is_public_searchable: boolean
+          latitude: number | null
+          location_input_text: string | null
+          location_label: string | null
+          longitude: number | null
+          mapbox_id: string | null
+          service_radius_km: number | null
+          user_id: number
+        }
+        Insert: {
+          country_code?: string
+          geocoded_at?: string | null
+          is_active?: boolean
+          is_approved?: boolean
+          is_profile_complete?: boolean
+          is_public_searchable?: boolean
+          latitude?: number | null
+          location_input_text?: string | null
+          location_label?: string | null
+          longitude?: number | null
+          mapbox_id?: string | null
+          service_radius_km?: number | null
+          user_id: number
+        }
+        Update: {
+          country_code?: string
+          geocoded_at?: string | null
+          is_active?: boolean
+          is_approved?: boolean
+          is_profile_complete?: boolean
+          is_public_searchable?: boolean
+          latitude?: number | null
+          location_input_text?: string | null
+          location_label?: string | null
+          longitude?: number | null
+          mapbox_id?: string | null
+          service_radius_km?: number | null
+          user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_search_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "professional_search_cards_enriched"
+            referencedColumns: ["professional_id"]
+          },
+          {
+            foreignKeyName: "professional_search_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professional_specialties: {
         Row: {
           created_at: string
@@ -161,17 +224,8 @@ export type Database = {
           first_name: string | null
           id: number
           is_professional: boolean | null
-          is_profile_complete: boolean | null
-          is_public_searchable: boolean
-          is_searchable: boolean | null
           last_name: string | null
-          location_locality: string | null
-          location_region: string | null
-          postal_code: string | null
           profile_photo_url: string | null
-          rating_avg: number
-          rating_count: number
-          service_area: string | null
         }
         Insert: {
           auth_user_id?: string | null
@@ -182,17 +236,8 @@ export type Database = {
           first_name?: string | null
           id?: number
           is_professional?: boolean | null
-          is_profile_complete?: boolean | null
-          is_public_searchable?: boolean
-          is_searchable?: boolean | null
           last_name?: string | null
-          location_locality?: string | null
-          location_region?: string | null
-          postal_code?: string | null
           profile_photo_url?: string | null
-          rating_avg?: number
-          rating_count?: number
-          service_area?: string | null
         }
         Update: {
           auth_user_id?: string | null
@@ -203,17 +248,8 @@ export type Database = {
           first_name?: string | null
           id?: number
           is_professional?: boolean | null
-          is_profile_complete?: boolean | null
-          is_public_searchable?: boolean
-          is_searchable?: boolean | null
           last_name?: string | null
-          location_locality?: string | null
-          location_region?: string | null
-          postal_code?: string | null
           profile_photo_url?: string | null
-          rating_avg?: number
-          rating_count?: number
-          service_area?: string | null
         }
         Relationships: []
       }
@@ -225,14 +261,14 @@ export type Database = {
           country_code: string | null
           first_name: string | null
           last_name: string | null
-          location_locality: string | null
-          location_region: string | null
-          postal_code: string | null
+          latitude: number | null
+          location_input_text: string | null
+          location_label: string | null
+          longitude: number | null
+          mapbox_id: string | null
           professional_id: number | null
           profile_photo_url: string | null
-          rating_avg: number | null
-          rating_count: number | null
-          service_area: string | null
+          service_radius_km: number | null
           specialties: string[] | null
         }
         Relationships: []

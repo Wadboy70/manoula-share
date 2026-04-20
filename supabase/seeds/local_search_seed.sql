@@ -18,17 +18,8 @@ begin
     last_name,
     profile_photo_url,
     is_professional,
-    is_profile_complete,
-    is_searchable,
-    is_public_searchable,
     country_code,
-    location_locality,
-    location_region,
-    postal_code,
-    service_area,
-    bio,
-    rating_avg,
-    rating_count
+    bio
   )
   values
     (
@@ -38,17 +29,8 @@ begin
       'Nwosu',
       'https://mockmind-api.uifaces.co/content/human/212.jpg',
       true,
-      true,
-      true,
-      true,
       'GB',
-      'London',
-      'Greater London',
-      'SW1A 1AA',
-      'In-person and virtual',
-      'Calm, evidence-informed lactation and postpartum support.',
-      4.9,
-      12
+      'Calm, evidence-informed lactation and postpartum support.'
     ),
     (
       '22222222-2222-2222-2222-222222222222',
@@ -57,17 +39,8 @@ begin
       'Baker',
       'https://mockmind-api.uifaces.co/content/human/214.jpg',
       true,
-      true,
-      true,
-      true,
       'GB',
-      'Manchester',
-      'Greater Manchester',
-      'M1 1AE',
-      'Virtual first with local visits',
-      'Holistic postpartum and nutrition planning for new mothers.',
-      4.7,
-      8
+      'Holistic postpartum and nutrition planning for new mothers.'
     )
   on conflict (email) do update
   set
@@ -75,17 +48,45 @@ begin
     last_name = excluded.last_name,
     profile_photo_url = excluded.profile_photo_url,
     is_professional = excluded.is_professional,
-    is_profile_complete = excluded.is_profile_complete,
-    is_searchable = excluded.is_searchable,
-    is_public_searchable = excluded.is_public_searchable,
     country_code = excluded.country_code,
-    location_locality = excluded.location_locality,
-    location_region = excluded.location_region,
-    postal_code = excluded.postal_code,
-    service_area = excluded.service_area,
-    bio = excluded.bio,
-    rating_avg = excluded.rating_avg,
-    rating_count = excluded.rating_count;
+    bio = excluded.bio;
+
+  insert into public.professional_search_profiles (
+    user_id,
+    is_profile_complete,
+    is_public_searchable,
+    is_active,
+    is_approved,
+    country_code,
+    location_input_text,
+    location_label
+  )
+  select
+    u.id,
+    true,
+    true,
+    true,
+    true,
+    'GB',
+    case u.email
+      when 'local-pro-ada@manoula.test' then 'London Greater London SW1A 1AA'
+      when 'local-pro-evelyn@manoula.test' then 'Manchester Greater Manchester M1 1AE'
+    end,
+    case u.email
+      when 'local-pro-ada@manoula.test' then 'In-person and virtual'
+      when 'local-pro-evelyn@manoula.test' then 'Virtual first with local visits'
+    end
+  from public.users u
+  where u.email in ('local-pro-ada@manoula.test', 'local-pro-evelyn@manoula.test')
+  on conflict (user_id) do update
+  set
+    is_profile_complete = excluded.is_profile_complete,
+    is_public_searchable = excluded.is_public_searchable,
+    is_active = excluded.is_active,
+    is_approved = excluded.is_approved,
+    country_code = excluded.country_code,
+    location_input_text = excluded.location_input_text,
+    location_label = excluded.location_label;
 
   with professional_ids as (
     select id

@@ -1,20 +1,20 @@
 import type { Database } from '@/types/database'
 
-type SearchCardRow =
-  Database['public']['Views']['professional_search_cards_enriched']['Row']
+type SearchCardRow = Database['public']['Views']['professional_search_cards_enriched']['Row']
 type SearchCardSelectRow = Pick<
   SearchCardRow,
   | 'professional_id'
   | 'first_name'
   | 'last_name'
   | 'profile_photo_url'
-  | 'service_area'
-  | 'location_locality'
-  | 'location_region'
   | 'country_code'
+  | 'location_label'
+  | 'location_input_text'
+  | 'mapbox_id'
+  | 'latitude'
+  | 'longitude'
+  | 'service_radius_km'
   | 'specialties'
-  | 'rating_avg'
-  | 'rating_count'
 >
 
 /** JSON body from the `search-cards` Edge Function (camelCase cards). */
@@ -27,13 +27,14 @@ export type SearchCard = {
   firstName: string | null
   lastName: string | null
   profilePhotoUrl: string | null
-  serviceArea: string | null
-  locationLocality: string | null
-  locationRegion: string | null
   countryCode: string | null
+  locationLabel: string | null
+  locationInputText: string | null
+  mapboxId: string | null
+  latitude: number | null
+  longitude: number | null
+  serviceRadiusKm: number | null
   specialties: string[]
-  ratingAvg: number | null
-  ratingCount: number | null
 }
 
 export function toSearchCard(row: SearchCardSelectRow): SearchCard | null {
@@ -44,12 +45,13 @@ export function toSearchCard(row: SearchCardSelectRow): SearchCard | null {
     firstName: row.first_name,
     lastName: row.last_name,
     profilePhotoUrl: row.profile_photo_url,
-    serviceArea: row.service_area,
-    locationLocality: row.location_locality,
-    locationRegion: row.location_region,
     countryCode: row.country_code,
+    locationLabel: row.location_label,
+    locationInputText: row.location_input_text,
+    mapboxId: row.mapbox_id,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    serviceRadiusKm: row.service_radius_km,
     specialties: row.specialties ?? [],
-    ratingAvg: row.rating_avg,
-    ratingCount: row.rating_count,
   }
 }

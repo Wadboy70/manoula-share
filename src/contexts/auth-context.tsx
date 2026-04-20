@@ -34,22 +34,23 @@ function readMetadataName(
   return trimmed.length > 0 ? trimmed : null
 }
 
-/** Matches migration backfill default when `country_code` is absent. */
+/** Matches `handle_new_user` default when `country_code` is absent in metadata. */
 function readMetadataCountryCode(user: User): string {
   const metadata = user.user_metadata
-  if (!metadata || typeof metadata !== 'object') return 'NG'
+  if (!metadata || typeof metadata !== 'object') return 'GB'
   const value = (metadata as Record<string, unknown>).country_code
-  if (typeof value !== 'string') return 'NG'
+  if (typeof value !== 'string') return 'GB'
   const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : 'NG'
+  return trimmed.length > 0 ? trimmed : 'GB'
 }
 
-async function fetchUserRow(authUser: User): Promise<AppUser | null> {
-  const { data, error } = await supabase
+const USERS_APP_SELECT =
+  'id,created_at,auth_user_id,first_name,last_name,email,is_professional,profile_photo_url,bio,country_code'
+
+async function fetchAppUser(authUser: User): Promise<AppUser | null> {
+  const { data: userRow, error } = await supabase
     .from('users')
-    .select(
-      'id,created_at,auth_user_id,first_name,last_name,email,is_professional,profile_photo_url,bio,is_profile_complete,is_searchable,is_public_searchable,country_code,location_locality,location_region,postal_code,service_area,rating_avg,rating_count',
-    )
+    .select(USERS_APP_SELECT)
     .eq('auth_user_id', authUser.id)
     .maybeSingle()
 
@@ -57,7 +58,25 @@ async function fetchUserRow(authUser: User): Promise<AppUser | null> {
     throw error
   }
 
-  return data
+  if (!userRow) {
+    return null
+  }
+
+  if (!userRow.is_professional) {
+    return { ...userRow, professionalSearchProfile: null }
+  }
+
+  const { data: profileRow, error: profileError } = await supabase
+    .from('professional_search_profiles')
+    .select('*')
+    .eq('user_id', userRow.id)
+    .maybeSingle()
+
+  if (profileError) {
+    throw profileError
+  }
+
+  return { ...userRow, professionalSearchProfile: profileRow }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -68,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadAppUser = useCallback(
     async (authUser: User, allowRecovery = false): Promise<AppUser | null> => {
-      const existing = await fetchUserRow(authUser)
+      const existing = await fetchAppUser(authUser)
       if (existing) {
         setAppUser(existing)
         return existing
@@ -93,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null
       }
 
-      const recovered = await fetchUserRow(authUser)
+      const recovered = await fetchAppUser(authUser)
       setAppUser(recovered)
       return recovered
     },

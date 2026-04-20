@@ -14,13 +14,14 @@ interface ProfessionalSearchCardRow {
   first_name: string | null
   last_name: string | null
   profile_photo_url: string | null
-  service_area: string | null
-  location_locality: string | null
-  location_region: string | null
   country_code: string | null
+  location_label: string | null
+  location_input_text: string | null
+  mapbox_id: string | null
+  latitude: number | null
+  longitude: number | null
+  service_radius_km: number | null
   specialties: string[] | null
-  rating_avg: number | null
-  rating_count: number | null
 }
 
 /** Wire format returned to the SPA (camelCase) — keep in sync with `SearchCard` in the app. */
@@ -29,13 +30,14 @@ interface SearchCard {
   firstName: string | null
   lastName: string | null
   profilePhotoUrl: string | null
-  serviceArea: string | null
-  locationLocality: string | null
-  locationRegion: string | null
   countryCode: string | null
+  locationLabel: string | null
+  locationInputText: string | null
+  mapboxId: string | null
+  latitude: number | null
+  longitude: number | null
+  serviceRadiusKm: number | null
   specialties: string[]
-  ratingAvg: number | null
-  ratingCount: number | null
 }
 
 function toSearchCard(row: ProfessionalSearchCardRow): SearchCard | null {
@@ -46,13 +48,14 @@ function toSearchCard(row: ProfessionalSearchCardRow): SearchCard | null {
     firstName: row.first_name,
     lastName: row.last_name,
     profilePhotoUrl: row.profile_photo_url,
-    serviceArea: row.service_area,
-    locationLocality: row.location_locality,
-    locationRegion: row.location_region,
     countryCode: row.country_code,
+    locationLabel: row.location_label,
+    locationInputText: row.location_input_text,
+    mapboxId: row.mapbox_id,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    serviceRadiusKm: row.service_radius_km,
     specialties: row.specialties ?? [],
-    ratingAvg: row.rating_avg,
-    ratingCount: row.rating_count,
   }
 }
 
@@ -86,7 +89,7 @@ Deno.serve(async (req) => {
   const { data, error } = await supabase
     .from('professional_search_cards_enriched')
     .select(
-      'professional_id,first_name,last_name,profile_photo_url,service_area,location_locality,location_region,country_code,specialties,rating_avg,rating_count',
+      'professional_id,first_name,last_name,profile_photo_url,country_code,location_label,location_input_text,mapbox_id,latitude,longitude,service_radius_km,specialties',
     )
 
   if (error) {

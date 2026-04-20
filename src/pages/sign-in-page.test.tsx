@@ -30,16 +30,8 @@ const { baseAppUser, loadAppUserMock } = vi.hoisted(() => {
     is_professional: false,
     profile_photo_url: null,
     bio: null,
-    is_profile_complete: false,
-    is_searchable: false,
-    is_public_searchable: false,
     country_code: 'US',
-    location_locality: null,
-    location_region: null,
-    postal_code: null,
-    service_area: null,
-    rating_avg: 0,
-    rating_count: 0,
+    professionalSearchProfile: null,
   })
   const loadAppUserMock = vi.fn(
     async (): Promise<AppUser | null> => baseAppUser(),
@@ -122,6 +114,7 @@ describe('SignInPage', () => {
       last_name: 'User',
       email: 'pro@example.com',
       is_professional: true,
+      professionalSearchProfile: null,
     })
     const user = userEvent.setup()
     renderSignIn()

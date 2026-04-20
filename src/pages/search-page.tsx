@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 import { SiteHeader } from '@/components/site-header'
 import { fetchLocationSuggestions } from '@/features/search/location.service'
 import type { LocationSuggestion } from '@/features/search/location.types'
-import { RatingWithScore } from '@/components/rating-with-score'
 import { useSearchResults } from '@/features/search/use-search-results'
 import type { SearchCard } from '@/features/search/search.types'
 import { Button } from '@/components/ui/button'
@@ -21,9 +20,9 @@ import { cn } from '@/lib/utils'
 const LOCATION_DEBOUNCE_MS = 300
 const LOCATION_MIN_QUERY_LENGTH = 3
 
-function renderServiceArea(card: SearchCard): string {
-  const area = card.serviceArea?.trim()
-  return area && area.length > 0 ? area : 'Service area coming soon'
+function renderLocationLabel(card: SearchCard): string {
+  const label = card.locationLabel?.trim()
+  return label && label.length > 0 ? label : 'Service area coming soon'
 }
 
 function renderName(card: SearchCard): string {
@@ -81,7 +80,7 @@ export function SearchPage() {
         if (locationRequestIdRef.current === requestId) {
           setLocationSuggestions(next)
         }
-      } catch (err) {
+      } catch {
         if (locationRequestIdRef.current === requestId) {
           setLocationSuggestions([])
           setLocationError('Could not load location suggestions.')
@@ -275,10 +274,6 @@ export function SearchPage() {
                               )}
                               <div className="flex min-w-0 flex-col gap-3 p-4">
                                 <p className="font-heading text-base text-white">{renderName(card)}</p>
-                                <RatingWithScore
-                                  ratingAvg={card.ratingAvg}
-                                  ratingCount={card.ratingCount}
-                                />
                                 <ul className="flex flex-wrap gap-2">
                                   {card.specialties.length > 0 ? (
                                     card.specialties.map((specialty) => (
@@ -294,7 +289,7 @@ export function SearchPage() {
                                   )}
                                 </ul>
                                 <p className="text-muted-foreground text-sm">
-                                  {renderServiceArea(card)}
+                                  {renderLocationLabel(card)}
                                 </p>
                               </div>
                             </article>

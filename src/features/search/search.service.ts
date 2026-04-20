@@ -28,13 +28,14 @@ function parseSearchCard(entry: unknown): SearchCard | null {
     firstName: asNullableString(row.firstName),
     lastName: asNullableString(row.lastName),
     profilePhotoUrl: asNullableString(row.profilePhotoUrl),
-    serviceArea: asNullableString(row.serviceArea),
-    locationLocality: asNullableString(row.locationLocality),
-    locationRegion: asNullableString(row.locationRegion),
     countryCode: asNullableString(row.countryCode),
+    locationLabel: asNullableString(row.locationLabel),
+    locationInputText: asNullableString(row.locationInputText),
+    mapboxId: asNullableString(row.mapboxId),
+    latitude: asNullableNumber(row.latitude),
+    longitude: asNullableNumber(row.longitude),
+    serviceRadiusKm: asNullableNumber(row.serviceRadiusKm),
     specialties,
-    ratingAvg: asNullableNumber(row.ratingAvg),
-    ratingCount: asNullableNumber(row.ratingCount),
   }
 }
 

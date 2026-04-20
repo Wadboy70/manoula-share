@@ -75,13 +75,14 @@ describe('SearchPage', () => {
           firstName: 'Ada',
           lastName: 'Nwosu',
           profilePhotoUrl: 'https://mockmind-api.uifaces.co/content/human/212.jpg',
-          serviceArea: 'In-person and virtual',
-          locationLocality: 'Lagos',
-          locationRegion: 'Lagos',
           countryCode: 'NG',
+          locationLabel: 'In-person and virtual',
+          locationInputText: 'Lagos',
+          mapboxId: null,
+          latitude: null,
+          longitude: null,
+          serviceRadiusKm: null,
           specialties: ['Lactation Consultant', 'Nutrition'],
-          ratingAvg: 4.9,
-          ratingCount: 10,
         },
       ],
     })
@@ -92,7 +93,6 @@ describe('SearchPage', () => {
       'href',
       '/professionals/1',
     )
-    expect(screen.getByRole('img', { name: /rating 5.0 out of 5, 10 reviews/i })).toBeInTheDocument()
     expect(screen.getByText('Lactation Consultant')).toBeInTheDocument()
     expect(screen.getByText('Nutrition')).toBeInTheDocument()
     expect(screen.getByText('In-person and virtual')).toBeInTheDocument()
