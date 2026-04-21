@@ -1,0 +1,2 @@
+# Netlify (and some static hosts): serve SPA for all routes so /search etc. load index.html
+/*    /index.html   200
