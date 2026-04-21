@@ -37,7 +37,7 @@ begin
       'local-pro-evelyn@manoula.test',
       'Evelyn',
       'Baker',
-      'https://mockmind-api.uifaces.co/content/human/214.jpg',
+      'https://mockmind-api.uifaces.co/content/human/219.jpg',
       true,
       'GB',
       'Holistic postpartum and nutrition planning for new mothers.'
