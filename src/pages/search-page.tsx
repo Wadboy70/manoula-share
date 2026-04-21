@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-
-import { SiteHeader } from '@/components/site-header'
 import { fetchLocationSuggestions } from '@/features/search/location.service'
 import type { LocationSuggestion } from '@/features/search/location.types'
 import { useSearchResults } from '@/features/search/use-search-results'
@@ -94,9 +92,8 @@ export function SearchPage() {
   }, [debouncedLocationQuery, locationSuggestSuppressed])
 
   return (
-    <div className="bg-background flex min-h-svh flex-col">
-      <SiteHeader />
-      <main id="main-content" className="font-body flex flex-1 flex-col">
+    <div className="bg-background flex min-h-0 flex-1 flex-col">
+      <main id="main-content" className="font-body flex min-h-0 flex-1 flex-col">
         <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
           <header className="mb-8 border-b border-white/10 pb-6">
             <h1 className="font-heading text-3xl tracking-tight text-white md:text-4xl">

@@ -97,7 +97,7 @@ export function SignInPage() {
   }
 
   return (
-    <div className="font-body flex min-h-svh flex-col items-center justify-center bg-[#1a1a1a] px-4 py-12">
+    <div className="font-body flex min-h-0 flex-1 flex-col items-center justify-center bg-[#1a1a1a] px-4 py-12">
       <Card className="w-full max-w-md border-white/10 shadow-md">
         <CardHeader>
           <CardTitle className="font-heading text-xl">Sign in</CardTitle>

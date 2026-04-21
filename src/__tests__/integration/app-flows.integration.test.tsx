@@ -269,6 +269,24 @@ describe('integration: routing and search', () => {
       expect(screen.getByRole('heading', { name: /^dashboard$/i })).toBeInTheDocument()
     })
   })
+
+  it('shows the brand header on sign-in and lists auth actions in the desktop menu sheet', async () => {
+    mockSb.store.session = null
+    renderWithApp(['/signin'])
+    const u = userEvent.setup()
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument()
+    })
+
+    expect(screen.getByRole('link', { name: /ma noula/i })).toHaveAttribute('href', '/')
+    await u.click(screen.getByRole('button', { name: /open menu/i }))
+
+    const panel = await screen.findByRole('dialog')
+    const inPanel = within(panel)
+    expect(inPanel.getByRole('link', { name: /^log in$/i })).toHaveAttribute('href', '/signin')
+    expect(inPanel.getByRole('link', { name: /^sign up$/i })).toHaveAttribute('href', '/signup')
+  })
 })
 
 describe('integration: forgot password', () => {
