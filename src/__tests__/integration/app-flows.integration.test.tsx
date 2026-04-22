@@ -216,10 +216,11 @@ describe('integration: routing and search', () => {
     renderWithApp(['/search'])
 
     await waitFor(() => {
-      expect(screen.getByText('Ada Nwosu')).toBeInTheDocument()
+      expect(screen.getByRole('article', { name: /ada nwosu/i })).toBeInTheDocument()
     })
+    const searchCard = screen.getByRole('article', { name: /ada nwosu/i })
     expect(
-      screen.getByRole('link', { name: /view profile for ada nwosu/i }),
+      within(searchCard).getByRole('link', { name: /^view profile$/i }),
     ).toHaveAttribute('href', '/professionals/42')
     expect(screen.getByText('In-person and virtual')).toBeInTheDocument()
   })

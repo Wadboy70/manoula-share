@@ -34,6 +34,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      professional_credentials: {
+        Row: {
+          created_at: string
+          credential_label: string
+          credential_type: string
+          expires_at: string | null
+          id: number
+          issuing_body: string | null
+          professional_id: number
+          registration_number: string | null
+          verification_status: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          credential_label: string
+          credential_type: string
+          expires_at?: string | null
+          id?: number
+          issuing_body?: string | null
+          professional_id: number
+          registration_number?: string | null
+          verification_status?: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          credential_label?: string
+          credential_type?: string
+          expires_at?: string | null
+          id?: number
+          issuing_body?: string | null
+          professional_id?: number
+          registration_number?: string | null
+          verification_status?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_credentials_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_search_cards_enriched"
+            referencedColumns: ["professional_id"]
+          },
+          {
+            foreignKeyName: "professional_credentials_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professional_search_profiles: {
         Row: {
           country_code: string
@@ -43,11 +97,12 @@ export type Database = {
           is_profile_complete: boolean
           is_public_searchable: boolean
           latitude: number | null
-          location_input_text: string | null
           location_label: string | null
           longitude: number | null
           mapbox_id: string | null
-          service_radius_km: number | null
+          offers_in_home: boolean
+          offers_provider_location: boolean
+          offers_remote: boolean
           user_id: number
         }
         Insert: {
@@ -58,11 +113,12 @@ export type Database = {
           is_profile_complete?: boolean
           is_public_searchable?: boolean
           latitude?: number | null
-          location_input_text?: string | null
           location_label?: string | null
           longitude?: number | null
           mapbox_id?: string | null
-          service_radius_km?: number | null
+          offers_in_home?: boolean
+          offers_provider_location?: boolean
+          offers_remote?: boolean
           user_id: number
         }
         Update: {
@@ -73,11 +129,12 @@ export type Database = {
           is_profile_complete?: boolean
           is_public_searchable?: boolean
           latitude?: number | null
-          location_input_text?: string | null
           location_label?: string | null
           longitude?: number | null
           mapbox_id?: string | null
-          service_radius_km?: number | null
+          offers_in_home?: boolean
+          offers_provider_location?: boolean
+          offers_remote?: boolean
           user_id?: number
         }
         Relationships: [
@@ -193,6 +250,179 @@ export type Database = {
           },
         ]
       }
+      service_area_places: {
+        Row: {
+          country_code: string
+          created_at: string
+          geocoded_at: string | null
+          id: number
+          latitude: number | null
+          location_label: string | null
+          longitude: number | null
+          mapbox_id: string | null
+          service_id: number
+        }
+        Insert: {
+          country_code?: string
+          created_at?: string
+          geocoded_at?: string | null
+          id?: number
+          latitude?: number | null
+          location_label?: string | null
+          longitude?: number | null
+          mapbox_id?: string | null
+          service_id: number
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          geocoded_at?: string | null
+          id?: number
+          latitude?: number | null
+          location_label?: string | null
+          longitude?: number | null
+          mapbox_id?: string | null
+          service_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_area_places_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_provider_locations: {
+        Row: {
+          country_code: string
+          created_at: string
+          geocoded_at: string | null
+          id: number
+          latitude: number | null
+          location_label: string | null
+          location_name: string | null
+          longitude: number | null
+          mapbox_id: string | null
+          service_id: number
+        }
+        Insert: {
+          country_code?: string
+          created_at?: string
+          geocoded_at?: string | null
+          id?: number
+          latitude?: number | null
+          location_label?: string | null
+          location_name?: string | null
+          longitude?: number | null
+          mapbox_id?: string | null
+          service_id: number
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          geocoded_at?: string | null
+          id?: number
+          latitude?: number | null
+          location_label?: string | null
+          location_name?: string | null
+          longitude?: number | null
+          mapbox_id?: string | null
+          service_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_provider_locations_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          created_at: string
+          currency_code: string
+          delivery_mode: string
+          description: string | null
+          duration_minutes: number | null
+          id: number
+          is_active: boolean
+          price_cents: number | null
+          professional_id: number
+          provider_location_name: string | null
+          remote_scope: string | null
+          service_area_text: string | null
+          service_area_type: string | null
+          service_radius_km: number | null
+          specialty_id: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency_code?: string
+          delivery_mode: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: number
+          is_active?: boolean
+          price_cents?: number | null
+          professional_id: number
+          provider_location_name?: string | null
+          remote_scope?: string | null
+          service_area_text?: string | null
+          service_area_type?: string | null
+          service_radius_km?: number | null
+          specialty_id?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency_code?: string
+          delivery_mode?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: number
+          is_active?: boolean
+          price_cents?: number | null
+          professional_id?: number
+          provider_location_name?: string | null
+          remote_scope?: string | null
+          service_area_text?: string | null
+          service_area_type?: string | null
+          service_radius_km?: number | null
+          specialty_id?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_search_cards_enriched"
+            referencedColumns: ["professional_id"]
+          },
+          {
+            foreignKeyName: "services_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "specialties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       specialties: {
         Row: {
           created_at: string
@@ -262,20 +492,26 @@ export type Database = {
           first_name: string | null
           last_name: string | null
           latitude: number | null
-          location_input_text: string | null
           location_label: string | null
           longitude: number | null
           mapbox_id: string | null
+          offers_in_home: boolean | null
+          offers_provider_location: boolean | null
+          offers_remote: boolean | null
           professional_id: number | null
           profile_photo_url: string | null
-          service_radius_km: number | null
+          services: Json | null
           specialties: string[] | null
         }
         Relationships: []
       }
     }
     Functions: {
-      [_ in never]: never
+      app_user_id_for_auth: { Args: never; Returns: number }
+      is_professional_publicly_listable: {
+        Args: { pro_id: number }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

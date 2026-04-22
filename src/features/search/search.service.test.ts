@@ -26,12 +26,23 @@ describe('fetchSearchCards', () => {
             profilePhotoUrl: null,
             countryCode: 'NG',
             locationLabel: 'In-person and virtual',
-            locationInputText: 'Lagos',
             mapboxId: null,
             latitude: null,
             longitude: null,
-            serviceRadiusKm: null,
+            offersRemote: true,
+            offersInHome: true,
+            offersProviderLocation: false,
             specialties: ['Lactation Consultant'],
+            services: [
+              {
+                id: 1,
+                title: 'Initial consult',
+                deliveryMode: 'remote',
+                priceCents: 5000,
+                currencyCode: 'GBP',
+                specialtyLabel: 'Lactation Consultant',
+              },
+            ],
           },
         ],
       },
@@ -49,12 +60,23 @@ describe('fetchSearchCards', () => {
         profilePhotoUrl: null,
         countryCode: 'NG',
         locationLabel: 'In-person and virtual',
-        locationInputText: 'Lagos',
         mapboxId: null,
         latitude: null,
         longitude: null,
-        serviceRadiusKm: null,
+        offersRemote: true,
+        offersInHome: true,
+        offersProviderLocation: false,
         specialties: ['Lactation Consultant'],
+        services: [
+          {
+            id: 1,
+            title: 'Initial consult',
+            deliveryMode: 'remote',
+            priceCents: 5000,
+            currencyCode: 'GBP',
+            specialtyLabel: 'Lactation Consultant',
+          },
+        ],
       },
     ])
   })
@@ -70,12 +92,14 @@ describe('fetchSearchCards', () => {
             profilePhotoUrl: null,
             countryCode: null,
             locationLabel: null,
-            locationInputText: null,
             mapboxId: null,
             latitude: null,
             longitude: null,
-            serviceRadiusKm: null,
+            offersRemote: false,
+            offersInHome: false,
+            offersProviderLocation: false,
             specialties: null,
+            services: null,
           },
         ],
       },
@@ -84,6 +108,7 @@ describe('fetchSearchCards', () => {
 
     const cards = await fetchSearchCards()
     expect(cards[0]?.specialties).toEqual([])
+    expect(cards[0]?.services).toEqual([])
   })
 
   it('throws when invoke returns an error', async () => {

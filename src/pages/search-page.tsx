@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { ChevronDown } from 'lucide-react'
 import { fetchLocationSuggestions } from '@/features/search/location.service'
 import type { LocationSuggestion } from '@/features/search/location.types'
+import {
+  DELIVERY_MODES,
+  DELIVERY_MODE_LABELS,
+  type DeliveryModeFilterValue,
+} from '@/features/search/delivery-mode-filter'
+import { SearchProviderCard } from '@/features/search/search-provider-card'
 import { useSearchResults } from '@/features/search/use-search-results'
-import type { SearchCard } from '@/features/search/search.types'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -18,20 +23,6 @@ import { cn } from '@/lib/utils'
 const LOCATION_DEBOUNCE_MS = 300
 const LOCATION_MIN_QUERY_LENGTH = 3
 
-function renderLocationLabel(card: SearchCard): string {
-  const label = card.locationLabel?.trim()
-  return label && label.length > 0 ? label : 'Service area coming soon'
-}
-
-function renderName(card: SearchCard): string {
-  const joined = [card.firstName, card.lastName]
-    .filter((value): value is string => Boolean(value))
-    .join(' ')
-    .trim()
-
-  return joined.length > 0 ? joined : 'Professional'
-}
-
 export function SearchPage() {
   const { loading, error, results, retry } = useSearchResults()
 
@@ -42,6 +33,7 @@ export function SearchPage() {
   const [locationError, setLocationError] = useState<string | null>(null)
   const [locationSuggestSuppressed, setLocationSuggestSuppressed] = useState(false)
   const locationRequestIdRef = useRef(0)
+  const [deliveryModeFilter, setDeliveryModeFilter] = useState<DeliveryModeFilterValue>('')
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -119,7 +111,8 @@ export function SearchPage() {
                     Filters
                   </h2>
                   <CardDescription>
-                    Narrow by specialty and location. More options coming soon.
+                    Narrow by specialty, location, and delivery mode (server-side filtering for delivery
+                    mode is coming soon).
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4 overflow-visible pt-0">
@@ -195,6 +188,43 @@ export function SearchPage() {
                   </div>
                   <div className="flex flex-col gap-2">
                     <label
+                      htmlFor="search-filter-delivery-mode"
+                      className="text-sm leading-snug font-medium text-white"
+                    >
+                      Delivery mode
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="search-filter-delivery-mode"
+                        value={deliveryModeFilter}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          if (v === '') {
+                            setDeliveryModeFilter('')
+                          } else if ((DELIVERY_MODES as readonly string[]).includes(v)) {
+                            setDeliveryModeFilter(v as DeliveryModeFilterValue)
+                          }
+                        }}
+                        className={cn(
+                          'border-input bg-input/30 text-foreground h-8 w-full min-w-0 appearance-none rounded-lg border py-1 pl-2.5 pr-9 text-sm outline-none',
+                          'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3',
+                        )}
+                      >
+                        <option value="">All delivery modes</option>
+                        {DELIVERY_MODES.map((mode) => (
+                          <option key={mode} value={mode}>
+                            {DELIVERY_MODE_LABELS[mode]}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2"
+                        aria-hidden
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label
                       htmlFor="search-filter-availability"
                       className="text-sm leading-snug font-medium text-white"
                     >
@@ -247,50 +277,16 @@ export function SearchPage() {
 
                 {!loading && !error && results.length > 0 ? (
                   <CardContent className="pt-0 pb-6">
-                    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2" aria-live="polite">
+                    <ul
+                      className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2"
+                      aria-live="polite"
+                    >
                       {results.map((card) => (
-                        <li key={card.professionalId}>
-                          <Link
-                            to={`/professionals/${card.professionalId}`}
-                            aria-label={`View profile for ${renderName(card)}`}
-                            className={cn(
-                              'block overflow-hidden rounded-lg border border-white/10 bg-white/5 text-left transition-colors',
-                              'hover:border-white/20 hover:bg-white/10',
-                              'focus-visible:ring-ring focus-visible:ring-offset-background outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-                            )}
-                          >
-                            <article>
-                              {card.profilePhotoUrl ? (
-                                <img
-                                  src={card.profilePhotoUrl}
-                                  alt=""
-                                  className="aspect-[4/5] w-full object-cover object-top"
-                                />
-                              ) : (
-                                <div className="bg-input/30 aspect-[4/5] w-full" aria-hidden="true" />
-                              )}
-                              <div className="flex min-w-0 flex-col gap-3 p-4">
-                                <p className="font-heading text-base text-white">{renderName(card)}</p>
-                                <ul className="flex flex-wrap gap-2">
-                                  {card.specialties.length > 0 ? (
-                                    card.specialties.map((specialty) => (
-                                      <li
-                                        key={specialty}
-                                        className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-sm font-medium text-white"
-                                      >
-                                        {specialty}
-                                      </li>
-                                    ))
-                                  ) : (
-                                    <li className="text-muted-foreground text-sm">Specialties coming soon</li>
-                                  )}
-                                </ul>
-                                <p className="text-muted-foreground text-sm">
-                                  {renderLocationLabel(card)}
-                                </p>
-                              </div>
-                            </article>
-                          </Link>
+                        <li key={card.professionalId} className="flex min-h-0 min-w-0 flex-col">
+                          <SearchProviderCard
+                            card={card}
+                            deliveryModeFilter={deliveryModeFilter}
+                          />
                         </li>
                       ))}
                     </ul>

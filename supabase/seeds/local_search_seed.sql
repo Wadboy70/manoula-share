@@ -58,8 +58,10 @@ begin
     is_active,
     is_approved,
     country_code,
-    location_input_text,
-    location_label
+    location_label,
+    offers_remote,
+    offers_in_home,
+    offers_provider_location
   )
   select
     u.id,
@@ -69,12 +71,20 @@ begin
     true,
     'GB',
     case u.email
-      when 'local-pro-ada@manoula.test' then 'London Greater London SW1A 1AA'
-      when 'local-pro-evelyn@manoula.test' then 'Manchester Greater Manchester M1 1AE'
-    end,
-    case u.email
       when 'local-pro-ada@manoula.test' then 'In-person and virtual'
       when 'local-pro-evelyn@manoula.test' then 'Virtual first with local visits'
+    end,
+    case u.email
+      when 'local-pro-ada@manoula.test' then true
+      when 'local-pro-evelyn@manoula.test' then true
+    end,
+    case u.email
+      when 'local-pro-ada@manoula.test' then true
+      when 'local-pro-evelyn@manoula.test' then false
+    end,
+    case u.email
+      when 'local-pro-ada@manoula.test' then false
+      when 'local-pro-evelyn@manoula.test' then true
     end
   from public.users u
   where u.email in ('local-pro-ada@manoula.test', 'local-pro-evelyn@manoula.test')
@@ -85,8 +95,10 @@ begin
     is_active = excluded.is_active,
     is_approved = excluded.is_approved,
     country_code = excluded.country_code,
-    location_input_text = excluded.location_input_text,
-    location_label = excluded.location_label;
+    location_label = excluded.location_label,
+    offers_remote = excluded.offers_remote,
+    offers_in_home = excluded.offers_in_home,
+    offers_provider_location = excluded.offers_provider_location;
 
   with professional_ids as (
     select id
@@ -133,4 +145,63 @@ begin
     end
   from public.users p
   where p.email in ('local-pro-ada@manoula.test', 'local-pro-evelyn@manoula.test');
+
+  with professionals as (
+    select id
+    from public.users
+    where email in ('local-pro-ada@manoula.test', 'local-pro-evelyn@manoula.test')
+  )
+  delete from public.services sv
+  using professionals p
+  where sv.professional_id = p.id;
+
+  insert into public.services (
+    professional_id,
+    specialty_id,
+    title,
+    description,
+    delivery_mode,
+    price_cents,
+    currency_code,
+    is_active
+  )
+  select
+    u.id,
+    s.id,
+    v.title,
+    v.description,
+    v.delivery_mode,
+    v.price_cents,
+    'GBP',
+    true
+  from public.users u
+  cross join lateral (
+    values
+      (
+        'local-pro-ada@manoula.test',
+        'lactation-consultant'::text,
+        'Lactation consultation (virtual)'::text,
+        'Video or phone support for feeding questions.'::text,
+        'remote'::text,
+        6500::integer
+      ),
+      (
+        'local-pro-ada@manoula.test',
+        'postpartum-doula'::text,
+        'Home visit — postpartum check-in'::text,
+        'In-person support at your home within service area.'::text,
+        'in_home'::text,
+        12000::integer
+      ),
+      (
+        'local-pro-evelyn@manoula.test',
+        'maternal-nutrition'::text,
+        'Clinic nutrition session'::text,
+        'One-to-one session at our Manchester studio.'::text,
+        'provider_location'::text,
+        8500::integer
+      )
+  ) as v(email, specialty_slug, title, description, delivery_mode, price_cents)
+  join public.specialties s on s.slug = v.specialty_slug
+  where u.email = v.email;
 end $$;
