@@ -3,6 +3,7 @@ import type {
   SearchCard,
   SearchCardService,
   SearchCardsInvokePayload,
+  SearchLocationFilter,
 } from '@/features/search/search.types'
 
 function asNullableString(value: unknown): string | null {
@@ -102,9 +103,26 @@ function parseSearchCardsInvokePayload(data: unknown): SearchCard[] {
   return parsed as SearchCard[]
 }
 
-export async function fetchSearchCards(): Promise<SearchCard[]> {
+export type FetchSearchCardsOptions = {
+  location?: SearchLocationFilter | null
+}
+
+export async function fetchSearchCards(options?: FetchSearchCardsOptions): Promise<SearchCard[]> {
+  const location = options?.location ?? null
+  const body =
+    location !== null
+      ? {
+          location: {
+            mapboxId: location.mapboxId,
+            latitude: location.latitude,
+            longitude: location.longitude,
+            ancestorMapboxIds: location.ancestorMapboxIds,
+          },
+        }
+      : {}
+
   const { data, error } = await supabase.functions.invoke<SearchCardsInvokePayload>('search-cards', {
-    body: {},
+    body,
   })
 
   if (error) {

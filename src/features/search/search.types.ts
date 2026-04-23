@@ -62,6 +62,16 @@ function parseServicesFromViewJson(value: unknown): SearchCardService[] {
   return out
 }
 
+/** User-selected place from autocomplete, sent to `search-cards` for geo filtering. */
+export type SearchLocationFilter = {
+  mapboxId: string
+  latitude: number
+  longitude: number
+  ancestorMapboxIds: string[]
+  /** Client-only: display string for the location field; not sent to the edge function. */
+  label?: string
+}
+
 /** JSON body from the `search-cards` Edge Function (camelCase cards). */
 export type SearchCardsInvokePayload = {
   cards: SearchCard[]

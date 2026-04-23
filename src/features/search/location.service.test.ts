@@ -19,8 +19,22 @@ describe('fetchLocationSuggestions', () => {
     invokeMock.mockResolvedValue({
       data: {
         suggestions: [
-          { id: 'mapbox-1', label: 'Los Angeles, California, United States' },
-          { id: 'mapbox-2', label: 'Los Altos, California, United States' },
+          {
+            id: 'mapbox-1',
+            label: 'Los Angeles, California, United States',
+            mapboxId: 'mapbox-1',
+            latitude: 34.05,
+            longitude: -118.25,
+            ancestorMapboxIds: ['ca', 'us'],
+          },
+          {
+            id: 'mapbox-2',
+            label: 'Los Altos, California, United States',
+            mapboxId: 'mapbox-2',
+            latitude: 37.38,
+            longitude: -122.11,
+            ancestorMapboxIds: ['ca'],
+          },
         ],
       },
       error: null,
@@ -30,8 +44,22 @@ describe('fetchLocationSuggestions', () => {
 
     expect(invokeMock).toHaveBeenCalledWith('location', { body: { query: 'Los An' } })
     expect(suggestions).toEqual([
-      { id: 'mapbox-1', label: 'Los Angeles, California, United States' },
-      { id: 'mapbox-2', label: 'Los Altos, California, United States' },
+      {
+        id: 'mapbox-1',
+        label: 'Los Angeles, California, United States',
+        mapboxId: 'mapbox-1',
+        latitude: 34.05,
+        longitude: -118.25,
+        ancestorMapboxIds: ['ca', 'us'],
+      },
+      {
+        id: 'mapbox-2',
+        label: 'Los Altos, California, United States',
+        mapboxId: 'mapbox-2',
+        latitude: 37.38,
+        longitude: -122.11,
+        ancestorMapboxIds: ['ca'],
+      },
     ])
   })
 

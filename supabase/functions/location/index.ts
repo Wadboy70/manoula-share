@@ -8,7 +8,14 @@ const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-type LocationSuggestion = { id: string; label: string }
+type LocationSuggestion = {
+  id: string
+  label: string
+  mapboxId: string
+  latitude: number
+  longitude: number
+  ancestorMapboxIds: string[]
+}
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -17,9 +24,25 @@ function jsonResponse(body: unknown, status = 200): Response {
   })
 }
 
+/** Collect parent feature ids from Geocoding v6 `properties.context` (user narrower than stored coverage). */
+function extractAncestorMapboxIds(context: unknown): string[] {
+  if (typeof context !== 'object' || context === null) return []
+  const seen = new Set<string>()
+  for (const value of Object.values(context as Record<string, unknown>)) {
+    if (typeof value !== 'object' || value === null) continue
+    const mid = (value as { mapbox_id?: unknown }).mapbox_id
+    if (typeof mid === 'string' && mid.length > 0) seen.add(mid)
+  }
+  return [...seen]
+}
+
 function mapFeatureToSuggestion(feature: unknown, index: number): LocationSuggestion | null {
   if (typeof feature !== 'object' || feature === null) return null
-  const f = feature as { id?: unknown; properties?: Record<string, unknown> }
+  const f = feature as {
+    id?: unknown
+    geometry?: { type?: unknown; coordinates?: unknown }
+    properties?: Record<string, unknown>
+  }
   const props = f.properties ?? {}
 
   const label =
@@ -33,14 +56,35 @@ function mapFeatureToSuggestion(feature: unknown, index: number): LocationSugges
 
   if (!label) return null
 
-  const id =
+  const mapboxId =
     f.id !== undefined && f.id !== null
       ? String(f.id)
       : typeof props.mapbox_id === 'string'
         ? props.mapbox_id
-        : `suggestion-${index}`
+        : null
 
-  return { id, label }
+  if (!mapboxId) return null
+
+  const id = mapboxId.length > 0 ? mapboxId : `suggestion-${index}`
+
+  const coords = f.geometry?.coordinates
+  if (!Array.isArray(coords) || coords.length < 2) return null
+  const lon = coords[0]
+  const lat = coords[1]
+  if (typeof lat !== 'number' || typeof lon !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return null
+  }
+
+  const ancestorMapboxIds = extractAncestorMapboxIds(props.context)
+
+  return {
+    id,
+    label,
+    mapboxId,
+    latitude: lat,
+    longitude: lon,
+    ancestorMapboxIds,
+  }
 }
 
 Deno.serve(async (req) => {

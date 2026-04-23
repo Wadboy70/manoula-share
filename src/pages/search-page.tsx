@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { fetchLocationSuggestions } from '@/features/search/location.service'
 import type { LocationSuggestion } from '@/features/search/location.types'
+import type { SearchLocationFilter } from '@/features/search/search.types'
 import {
   DELIVERY_MODES,
   DELIVERY_MODE_LABELS,
@@ -24,7 +25,8 @@ const LOCATION_DEBOUNCE_MS = 300
 const LOCATION_MIN_QUERY_LENGTH = 3
 
 export function SearchPage() {
-  const { loading, error, results, retry } = useSearchResults()
+  const [appliedSearchLocation, setAppliedSearchLocation] = useState<SearchLocationFilter | null>(null)
+  const { loading, error, results, retry } = useSearchResults(appliedSearchLocation)
 
   const [locationInput, setLocationInput] = useState('')
   const [debouncedLocationQuery, setDebouncedLocationQuery] = useState('')
@@ -145,7 +147,14 @@ export function SearchPage() {
                         value={locationInput}
                         onChange={(e) => {
                           setLocationSuggestSuppressed(false)
-                          setLocationInput(e.target.value)
+                          const value = e.target.value
+                          setLocationInput(value)
+                          if (
+                            appliedSearchLocation !== null &&
+                            value.trim() !== (appliedSearchLocation.label ?? '').trim()
+                          ) {
+                            setAppliedSearchLocation(null)
+                          }
                         }}
                         aria-autocomplete="list"
                         aria-expanded={locationSuggestions.length > 0}
@@ -165,6 +174,13 @@ export function SearchPage() {
                                 className="hover:bg-input/50 w-full px-3 py-2 text-left text-sm text-white"
                                 onClick={() => {
                                   setLocationInput(suggestion.label)
+                                  setAppliedSearchLocation({
+                                    mapboxId: suggestion.mapboxId,
+                                    latitude: suggestion.latitude,
+                                    longitude: suggestion.longitude,
+                                    ancestorMapboxIds: suggestion.ancestorMapboxIds,
+                                    label: suggestion.label,
+                                  })
                                   setLocationSuggestions([])
                                   setLocationSuggestSuppressed(true)
                                   queueMicrotask(() => {

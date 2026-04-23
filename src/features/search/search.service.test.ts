@@ -81,6 +81,27 @@ describe('fetchSearchCards', () => {
     ])
   })
 
+  it('sends location in invoke body when a filter is provided', async () => {
+    invokeMock.mockResolvedValue({ data: { cards: [] }, error: null })
+    const loc = {
+      mapboxId: 'dXJuOm1ieHBsYzp',
+      latitude: 51.5,
+      longitude: -0.12,
+      ancestorMapboxIds: ['parent-id'],
+    }
+    await fetchSearchCards({ location: loc })
+    expect(invokeMock).toHaveBeenCalledWith('search-cards', {
+      body: {
+        location: {
+          mapboxId: loc.mapboxId,
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+          ancestorMapboxIds: loc.ancestorMapboxIds,
+        },
+      },
+    })
+  })
+
   it('normalizes null specialties to an empty array', async () => {
     invokeMock.mockResolvedValue({
       data: {

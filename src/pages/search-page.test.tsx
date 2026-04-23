@@ -25,6 +25,18 @@ vi.mock('@/features/search/location.service', () => ({
   fetchLocationSuggestions: fetchLocationSuggestionsMock,
 }))
 
+function mockLocationSuggestion(overrides: Partial<{ id: string; label: string }> = {}) {
+  return {
+    id: 'mb-los-angeles',
+    label: 'Los Angeles, CA',
+    mapboxId: 'mb-los-angeles',
+    latitude: 34.05,
+    longitude: -118.25,
+    ancestorMapboxIds: ['mb-ca', 'mb-us'],
+    ...overrides,
+  }
+}
+
 function renderSearchPage() {
   return render(
     <MemoryRouter>
@@ -215,9 +227,7 @@ describe('SearchPage', () => {
   })
 
   it('fetches location suggestions after debounce when query is at least 3 characters', async () => {
-    fetchLocationSuggestionsMock.mockResolvedValue([
-      { id: '1', label: 'Los Angeles, CA' },
-    ])
+    fetchLocationSuggestionsMock.mockResolvedValue([mockLocationSuggestion()])
     useSearchResultsMock.mockReturnValue({
       loading: false,
       error: null,
@@ -240,10 +250,39 @@ describe('SearchPage', () => {
     expect(await screen.findByRole('option', { name: /los angeles, ca/i })).toBeInTheDocument()
   })
 
+  it('passes selected location into useSearchResults after choosing a suggestion', async () => {
+    fetchLocationSuggestionsMock.mockResolvedValue([mockLocationSuggestion()])
+    useSearchResultsMock.mockReturnValue({
+      loading: false,
+      error: null,
+      retry: vi.fn(),
+      results: [],
+    })
+
+    renderSearchPage()
+    const locationInput = screen.getByRole('textbox', { name: /location/i })
+
+    fireEvent.change(locationInput, { target: { value: 'Los' } })
+
+    await waitFor(() => {
+      expect(fetchLocationSuggestionsMock).toHaveBeenCalled()
+    })
+
+    fireEvent.click(screen.getByRole('option', { name: /los angeles, ca/i }))
+
+    expect(useSearchResultsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        mapboxId: 'mb-los-angeles',
+        latitude: 34.05,
+        longitude: -118.25,
+        ancestorMapboxIds: ['mb-ca', 'mb-us'],
+        label: 'Los Angeles, CA',
+      }),
+    )
+  })
+
   it('fills location input when a suggestion is chosen', async () => {
-    fetchLocationSuggestionsMock.mockResolvedValue([
-      { id: '1', label: 'Los Angeles, CA' },
-    ])
+    fetchLocationSuggestionsMock.mockResolvedValue([mockLocationSuggestion()])
     useSearchResultsMock.mockReturnValue({
       loading: false,
       error: null,

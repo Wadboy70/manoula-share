@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { fetchSearchCards } from '@/features/search/search.service'
-import type { SearchCard } from '@/features/search/search.types'
+import type { SearchCard, SearchLocationFilter } from '@/features/search/search.types'
 
 type UseSearchResults = {
   loading: boolean
@@ -12,7 +12,7 @@ type UseSearchResults = {
 
 const GENERIC_ERROR = 'We could not load search results. Please try again.'
 
-export function useSearchResults(): UseSearchResults {
+export function useSearchResults(searchLocation: SearchLocationFilter | null): UseSearchResults {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<SearchCard[]>([])
@@ -22,7 +22,9 @@ export function useSearchResults(): UseSearchResults {
     setError(null)
 
     try {
-      const next = await fetchSearchCards()
+      const next = await fetchSearchCards({
+        location: searchLocation,
+      })
       setResults(next)
     } catch (err) {
       const message = err instanceof Error ? err.message : GENERIC_ERROR
@@ -31,7 +33,7 @@ export function useSearchResults(): UseSearchResults {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [searchLocation])
 
   useEffect(() => {
     void load()
