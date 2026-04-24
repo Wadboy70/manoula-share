@@ -15,7 +15,7 @@ React (Vite) + TypeScript + Tailwind + shadcn/ui + Supabase. Product context: [`
 
 - **Unit / component tests:** colocate as `*.test.ts` or `*.test.tsx` next to the module under `src/`.
 - **Integration / cross-route flows:** only under [`src/__tests__/integration/`](src/__tests__/integration/) (e.g. auth, routing, search across surfaces).
-- **Shared test harness:** [`src/test/setup.ts`](src/test/setup.ts), mocks, and [`src/test/integration/fixtures.ts`](src/test/integration/fixtures.ts) for data builders—do not add a second parallel integration root.
+- **Shared test harness:** [`src/test/`](src/test/) (see [`src/test/README.md`](src/test/README.md)): `setup.ts`, mocks, and [`src/test/integration/fixtures.ts`](src/test/integration/fixtures.ts) for data builders—do not add a second parallel integration root.
 
 Run **`npm run test:run`** before committing structural changes.
 
