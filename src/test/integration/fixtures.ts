@@ -70,6 +70,8 @@ export function makeProfessionalProfileRow(
     offers_in_home: false,
     offers_provider_location: false,
     geocoded_at: null,
+    rating_avg: null,
+    rating_count: 0,
     ...overrides,
   }
 }

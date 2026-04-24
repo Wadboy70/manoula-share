@@ -17,6 +17,8 @@ type SearchCardSelectRow = Pick<
   | 'offers_provider_location'
   | 'specialties'
   | 'services'
+  | 'rating_avg'
+  | 'rating_count'
 >
 
 /** One active service on a search card (subset of `public.services`). UI uses `specialtyLabel` only for now. */
@@ -81,11 +83,21 @@ export type SearchCardsInvokeRequestBody = {
     ancestorMapboxIds: string[]
   }
   specialtyLabel?: string
+  deliveryMode?: string
+  limit?: number
+  cursor?: SearchPageCursor | null
+}
+
+export type SearchPageCursor = {
+  sortScore: number
+  professionalId: number
 }
 
 /** JSON body from the `search-cards` Edge Function (camelCase cards). */
 export type SearchCardsInvokePayload = {
   cards: SearchCard[]
+  nextCursor: SearchPageCursor | null
+  truncated: boolean
 }
 
 export type SearchCard = {
@@ -101,6 +113,9 @@ export type SearchCard = {
   offersRemote: boolean
   offersInHome: boolean
   offersProviderLocation: boolean
+  /** Denormalized from profile when returned by search RPC (optional for older mocks). */
+  ratingAvg?: number | null
+  ratingCount?: number | null
   specialties: string[]
   services: SearchCardService[]
 }
@@ -121,6 +136,8 @@ export function toSearchCard(row: SearchCardSelectRow): SearchCard | null {
     offersRemote: row.offers_remote ?? false,
     offersInHome: row.offers_in_home ?? false,
     offersProviderLocation: row.offers_provider_location ?? false,
+    ratingAvg: row.rating_avg ?? null,
+    ratingCount: row.rating_count ?? 0,
     specialties: row.specialties ?? [],
     services: parseServicesFromViewJson(row.services),
   }

@@ -8,16 +8,35 @@ const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-type ServiceWire = {
-  id: number
-  title: string
-  deliveryMode: string
-  priceCents: number | null
-  currencyCode: string
-  specialtyLabel: string | null
+const DEFAULT_PAGE_SIZE = 12
+const MAX_PAGE_SIZE = 50
+const ANON_MAX_RESULTS = 3
+
+const ALLOWED_DELIVERY_MODES = new Set(['remote', 'in_home', 'provider_location'])
+
+type JwtRole = 'anon' | 'authenticated'
+
+function jwtPayloadFromBearer(authHeader: string): Record<string, unknown> | null {
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : ''
+  if (!token) return null
+  const parts = token.split('.')
+  if (parts.length < 2) return null
+  try {
+    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4)
+    const json = atob(padded)
+    return JSON.parse(json) as Record<string, unknown>
+  } catch {
+    return null
+  }
 }
 
-/** Request filter: user-selected place from Mapbox forward geocode (incl. context ancestors). */
+function jwtRole(authHeader: string): JwtRole {
+  const payload = jwtPayloadFromBearer(authHeader)
+  const role = typeof payload?.role === 'string' ? payload.role : ''
+  return role === 'authenticated' ? 'authenticated' : 'anon'
+}
+
 type SearchLocationFilter = {
   mapboxId: string
   latitude: number
@@ -25,331 +44,9 @@ type SearchLocationFilter = {
   ancestorMapboxIds: string[]
 }
 
-type GeoPlaceRow = {
-  mapbox_id: string | null
-  latitude: number | null
-  longitude: number | null
-}
-
-/** Service row as returned by `professional_search_cards_enriched.services` JSON (includes geo for filtering). */
-type ServiceFromView = {
-  id: number
-  title: string
-  deliveryMode: string
-  priceCents: number | null
-  currencyCode: string
-  specialtyLabel: string | null
-  service_area_type: string | null
-  service_radius_km: number | null
-  provider_locations: GeoPlaceRow[]
-  service_area_places: GeoPlaceRow[]
-}
-
-/** View row shape (snake_case) — keep in sync with `professional_search_cards_enriched` select list. */
-interface ProfessionalSearchCardRow {
-  professional_id: number | null
-  first_name: string | null
-  last_name: string | null
-  profile_photo_url: string | null
-  country_code: string | null
-  location_label: string | null
-  mapbox_id: string | null
-  latitude: number | null
-  longitude: number | null
-  offers_remote: boolean | null
-  offers_in_home: boolean | null
-  offers_provider_location: boolean | null
-  specialties: string[] | null
-  services: unknown
-}
-
-/** Wire format returned to the SPA (camelCase) — keep in sync with `SearchCard` in the app. */
-interface SearchCard {
+type SearchCursorWire = {
+  sortScore: number
   professionalId: number
-  firstName: string | null
-  lastName: string | null
-  profilePhotoUrl: string | null
-  countryCode: string | null
-  locationLabel: string | null
-  mapboxId: string | null
-  latitude: number | null
-  longitude: number | null
-  offersRemote: boolean
-  offersInHome: boolean
-  offersProviderLocation: boolean
-  specialties: string[]
-  services: ServiceWire[]
-}
-
-function toServiceWire(s: ServiceFromView): ServiceWire {
-  return {
-    id: s.id,
-    title: s.title,
-    deliveryMode: s.deliveryMode,
-    priceCents: s.priceCents,
-    currencyCode: s.currencyCode,
-    specialtyLabel: s.specialtyLabel,
-  }
-}
-
-function parseGeoPlaces(raw: unknown): GeoPlaceRow[] {
-  if (!Array.isArray(raw)) return []
-  const out: GeoPlaceRow[] = []
-  for (const item of raw) {
-    if (typeof item !== 'object' || item === null) continue
-    const o = item as Record<string, unknown>
-    const mapbox_id = typeof o.mapbox_id === 'string' ? o.mapbox_id : null
-    const lat = typeof o.latitude === 'number' && Number.isFinite(o.latitude) ? o.latitude : null
-    const lon = typeof o.longitude === 'number' && Number.isFinite(o.longitude) ? o.longitude : null
-    out.push({ mapbox_id, latitude: lat, longitude: lon })
-  }
-  return out
-}
-
-function parseServiceFromView(entry: unknown): ServiceFromView | null {
-  if (typeof entry !== 'object' || entry === null) return null
-  const o = entry as Record<string, unknown>
-  const idRaw = o.id
-  const id = typeof idRaw === 'number' ? idRaw : typeof idRaw === 'string' ? Number(idRaw) : NaN
-  if (!Number.isFinite(id)) return null
-  const title = typeof o.title === 'string' ? o.title.trim() : ''
-  if (!title) return null
-  const deliveryRaw = o.delivery_mode ?? o.deliveryMode
-  const deliveryMode = typeof deliveryRaw === 'string' ? deliveryRaw : 'unknown'
-  const priceRaw = o.price_cents ?? o.priceCents
-  const priceCents =
-    typeof priceRaw === 'number' && Number.isFinite(priceRaw)
-      ? priceRaw
-      : null
-  const currencyRaw = o.currency_code ?? o.currencyCode
-  const currencyCode =
-    typeof currencyRaw === 'string' && currencyRaw.trim() !== '' ? currencyRaw : 'GBP'
-  const specRaw = o.specialty_label ?? o.specialtyLabel
-  const specialtyLabel =
-    typeof specRaw === 'string' && specRaw.trim() !== '' ? specRaw.trim() : null
-
-  const satRaw = o.service_area_type ?? o.serviceAreaType
-  const service_area_type = typeof satRaw === 'string' ? satRaw : null
-
-  const srRaw = o.service_radius_km ?? o.serviceRadiusKm
-  let service_radius_km: number | null = null
-  if (typeof srRaw === 'number' && Number.isFinite(srRaw)) {
-    service_radius_km = srRaw
-  } else if (typeof srRaw === 'string' && srRaw.trim() !== '') {
-    const n = Number(srRaw)
-    service_radius_km = Number.isFinite(n) ? n : null
-  }
-
-  const provider_locations = parseGeoPlaces(o.provider_locations ?? o.providerLocations)
-  const service_area_places = parseGeoPlaces(o.service_area_places ?? o.serviceAreaPlaces)
-
-  return {
-    id,
-    title,
-    deliveryMode,
-    priceCents,
-    currencyCode,
-    specialtyLabel,
-    service_area_type,
-    service_radius_km,
-    provider_locations,
-    service_area_places,
-  }
-}
-
-function parseServicesFromRow(raw: unknown): ServiceFromView[] {
-  if (!Array.isArray(raw)) return []
-  const out: ServiceFromView[] = []
-  for (const item of raw) {
-    const parsed = parseServiceFromView(item)
-    if (parsed) out.push(parsed)
-  }
-  return out
-}
-
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371
-  const toRad = (d: number) => (d * Math.PI) / 180
-  const dLat = toRad(lat2 - lat1)
-  const dLon = toRad(lon2 - lon1)
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  return R * c
-}
-
-function buildUserPlaceIdSet(location: SearchLocationFilter): Set<string> {
-  const set = new Set<string>()
-  set.add(location.mapboxId)
-  for (const id of location.ancestorMapboxIds) {
-    if (typeof id === 'string' && id.length > 0) set.add(id)
-  }
-  return set
-}
-
-function anyStoredPlaceMatchesUserPlaces(places: GeoPlaceRow[], userIds: Set<string>): boolean {
-  for (const p of places) {
-    if (typeof p.mapbox_id === 'string' && p.mapbox_id.length > 0 && userIds.has(p.mapbox_id)) {
-      return true
-    }
-  }
-  return false
-}
-
-function radiusMatches(
-  service: ServiceFromView,
-  profileLat: number | null,
-  profileLng: number | null,
-  userLat: number,
-  userLng: number,
-): boolean {
-  const km = service.service_radius_km
-  if (km === null || km <= 0) return false
-  if (profileLat === null || profileLng === null) return false
-  if (!Number.isFinite(profileLat) || !Number.isFinite(profileLng)) return false
-  const dist = haversineKm(userLat, userLng, profileLat, profileLng)
-  return dist <= km
-}
-
-/**
- * Hybrid (MVP): if the service has no usable geo footprint, treat as remote-like (include when location filter on).
- * Otherwise match if any geographic arm (place_list / radius / provider_location) matches.
- */
-function hybridMatchesLocation(
-  service: ServiceFromView,
-  profileLat: number | null,
-  profileLng: number | null,
-  userIds: Set<string>,
-  userLat: number,
-  userLng: number,
-): boolean {
-  const hasProvider = service.provider_locations.length > 0
-  const hasPlaceList = service.service_area_type === 'place_list' && service.service_area_places.length > 0
-  const hasRadius =
-    service.service_area_type === 'radius' &&
-    service.service_radius_km !== null &&
-    service.service_radius_km > 0
-
-  if (!hasProvider && !hasPlaceList && !hasRadius) {
-    return true
-  }
-
-  if (hasProvider && anyStoredPlaceMatchesUserPlaces(service.provider_locations, userIds)) {
-    return true
-  }
-  if (hasPlaceList && anyStoredPlaceMatchesUserPlaces(service.service_area_places, userIds)) {
-    return true
-  }
-  if (hasRadius && radiusMatches(service, profileLat, profileLng, userLat, userLng)) {
-    return true
-  }
-  return false
-}
-
-function inHomeMatchesLocation(
-  service: ServiceFromView,
-  profileLat: number | null,
-  profileLng: number | null,
-  userIds: Set<string>,
-  userLat: number,
-  userLng: number,
-): boolean {
-  const sat = service.service_area_type
-
-  if (sat === 'place_list') {
-    if (service.service_area_places.length === 0) return false
-    return anyStoredPlaceMatchesUserPlaces(service.service_area_places, userIds)
-  }
-
-  if (sat === 'radius') {
-    return radiusMatches(service, profileLat, profileLng, userLat, userLng)
-  }
-
-  // null, custom_text, or unknown — no reliable geometry when filtering by location
-  return false
-}
-
-function serviceMatchesLocation(
-  service: ServiceFromView,
-  profileLat: number | null,
-  profileLng: number | null,
-  location: SearchLocationFilter,
-): boolean {
-  const mode = service.deliveryMode
-  const userIds = buildUserPlaceIdSet(location)
-  const { latitude: userLat, longitude: userLng } = location
-
-  if (mode === 'remote') {
-    return true
-  }
-
-  if (mode === 'provider_location') {
-    if (service.provider_locations.length === 0) return false
-    return anyStoredPlaceMatchesUserPlaces(service.provider_locations, userIds)
-  }
-
-  if (mode === 'in_home') {
-    return inHomeMatchesLocation(service, profileLat, profileLng, userIds, userLat, userLng)
-  }
-
-  if (mode === 'hybrid') {
-    return hybridMatchesLocation(service, profileLat, profileLng, userIds, userLat, userLng)
-  }
-
-  return false
-}
-
-function filterServicesForLocation(
-  services: ServiceFromView[],
-  profileLat: number | null,
-  profileLng: number | null,
-  location: SearchLocationFilter,
-): ServiceWire[] {
-  const out: ServiceWire[] = []
-  for (const s of services) {
-    if (serviceMatchesLocation(s, profileLat, profileLng, location)) {
-      out.push(toServiceWire(s))
-    }
-  }
-  return out
-}
-
-function toSearchCard(
-  row: ProfessionalSearchCardRow,
-  location: SearchLocationFilter | null,
-  specialtyLabel: string | null,
-): SearchCard | null {
-  if (row.professional_id === null) return null
-
-  const parsedServices = parseServicesFromRow(row.services)
-  let servicesForGeo = parsedServices
-  if (specialtyLabel !== null) {
-    servicesForGeo = parsedServices.filter((s) => s.specialtyLabel === specialtyLabel)
-    if (servicesForGeo.length === 0) return null
-  }
-
-  const services =
-    location !== null
-      ? filterServicesForLocation(servicesForGeo, row.latitude, row.longitude, location)
-      : servicesForGeo.map(toServiceWire)
-
-  return {
-    professionalId: row.professional_id,
-    firstName: row.first_name,
-    lastName: row.last_name,
-    profilePhotoUrl: row.profile_photo_url,
-    countryCode: row.country_code,
-    locationLabel: row.location_label,
-    mapboxId: row.mapbox_id,
-    latitude: row.latitude,
-    longitude: row.longitude,
-    offersRemote: row.offers_remote ?? false,
-    offersInHome: row.offers_in_home ?? false,
-    offersProviderLocation: row.offers_provider_location ?? false,
-    specialties: row.specialties ?? [],
-    services,
-  }
 }
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -457,6 +154,100 @@ function parseSpecialtyLabel(body: unknown): ParseSpecialtyLabelResult {
   return { ok: true, specialtyLabel: trimmed }
 }
 
+type ParseDeliveryModeResult =
+  | { ok: true; deliveryMode: string | null }
+  | { ok: false; message: string }
+
+function parseDeliveryMode(body: unknown): ParseDeliveryModeResult {
+  if (typeof body !== 'object' || body === null || !('deliveryMode' in body)) {
+    return { ok: true, deliveryMode: null }
+  }
+  const raw = (body as { deliveryMode: unknown }).deliveryMode
+  if (raw === undefined || raw === null) {
+    return { ok: true, deliveryMode: null }
+  }
+  if (typeof raw !== 'string') {
+    return { ok: false, message: 'deliveryMode must be a string when provided' }
+  }
+  const trimmed = raw.trim()
+  if (trimmed === '') {
+    return { ok: true, deliveryMode: null }
+  }
+  if (!ALLOWED_DELIVERY_MODES.has(trimmed)) {
+    return { ok: false, message: 'deliveryMode is invalid' }
+  }
+  return { ok: true, deliveryMode: trimmed }
+}
+
+type ParseCursorResult =
+  | { ok: true; cursor: SearchCursorWire | null }
+  | { ok: false; message: string }
+
+function parseCursor(body: unknown): ParseCursorResult {
+  if (typeof body !== 'object' || body === null || !('cursor' in body)) {
+    return { ok: true, cursor: null }
+  }
+  const raw = (body as { cursor: unknown }).cursor
+  if (raw === undefined || raw === null) {
+    return { ok: true, cursor: null }
+  }
+  if (typeof raw !== 'object' || raw === null) {
+    return { ok: false, message: 'cursor must be an object when provided' }
+  }
+  const o = raw as Record<string, unknown>
+  const sortScore = o.sortScore
+  const professionalId = o.professionalId
+  if (typeof sortScore !== 'number' || !Number.isFinite(sortScore)) {
+    return { ok: false, message: 'cursor.sortScore must be a finite number' }
+  }
+  if (typeof professionalId !== 'number' || !Number.isFinite(professionalId) || professionalId <= 0) {
+    return { ok: false, message: 'cursor.professionalId must be a positive finite number' }
+  }
+  return { ok: true, cursor: { sortScore, professionalId } }
+}
+
+function parseRequestedLimit(body: unknown): number {
+  if (typeof body !== 'object' || body === null || !('limit' in body)) {
+    return DEFAULT_PAGE_SIZE
+  }
+  const raw = (body as { limit: unknown }).limit
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) {
+    return DEFAULT_PAGE_SIZE
+  }
+  return Math.floor(raw)
+}
+
+type RpcPagePayload = {
+  cards: unknown[]
+  nextCursor: SearchCursorWire | null
+  rowsRead: number
+  error?: string
+}
+
+function asSearchCardsPayload(raw: unknown): RpcPagePayload | null {
+  if (typeof raw !== 'object' || raw === null) return null
+  const o = raw as Record<string, unknown>
+  if (!Array.isArray(o.cards)) return null
+  if (!('nextCursor' in o)) return null
+  const rowsRaw = o.rowsRead
+  const rowsRead =
+    typeof rowsRaw === 'number' && Number.isFinite(rowsRaw) && rowsRaw >= 0 ? Math.floor(rowsRaw) : 0
+  const nc = o.nextCursor
+  let nextCursor: SearchCursorWire | null = null
+  if (nc !== null && typeof nc === 'object' && nc !== null) {
+    const c = nc as Record<string, unknown>
+    if (
+      typeof c.sortScore === 'number' &&
+      Number.isFinite(c.sortScore) &&
+      typeof c.professionalId === 'number' &&
+      Number.isFinite(c.professionalId)
+    ) {
+      nextCursor = { sortScore: c.sortScore, professionalId: c.professionalId }
+    }
+  }
+  return { cards: o.cards, nextCursor, rowsRead, error: typeof o.error === 'string' ? o.error : undefined }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -480,6 +271,36 @@ Deno.serve(async (req) => {
   }
   const specialtyLabel = parsedSpecialty.specialtyLabel
 
+  const parsedDelivery = parseDeliveryMode(body)
+  if (!parsedDelivery.ok) {
+    return jsonResponse({ error: parsedDelivery.message }, 400)
+  }
+  const deliveryMode = parsedDelivery.deliveryMode
+
+  const parsedCursor = parseCursor(body)
+  if (!parsedCursor.ok) {
+    return jsonResponse({ error: parsedCursor.message }, 400)
+  }
+  let cursor = parsedCursor.cursor
+
+  const role = jwtRole(authHeader)
+  if (role === 'anon' && cursor !== null) {
+    return jsonResponse({ error: 'Signed-out search does not support pagination cursors' }, 400)
+  }
+
+  const requestedLimit = Math.min(Math.max(parseRequestedLimit(body), 1), MAX_PAGE_SIZE)
+
+  let rpcReturnCap: number
+  let rpcProbeRows: number
+  if (role === 'anon') {
+    rpcReturnCap = ANON_MAX_RESULTS
+    rpcProbeRows = 1
+    cursor = null
+  } else {
+    rpcReturnCap = requestedLimit
+    rpcProbeRows = 1
+  }
+
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -490,24 +311,49 @@ Deno.serve(async (req) => {
     global: { headers: { Authorization: authHeader } },
   })
 
-  const { data, error } = await supabase
-    .from('professional_search_cards_enriched')
-    .select(
-      'professional_id,first_name,last_name,profile_photo_url,country_code,location_label,mapbox_id,latitude,longitude,offers_remote,offers_in_home,offers_provider_location,specialties,services',
-    )
+  const pLocation =
+    location === null
+      ? null
+      : {
+          mapboxId: location.mapboxId,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          ancestorMapboxIds: location.ancestorMapboxIds,
+        }
+
+  const { data, error } = await supabase.rpc('search_professional_cards_page', {
+    p_return_cap: rpcReturnCap,
+    p_probe_rows: rpcProbeRows,
+    p_after_sort_score: cursor?.sortScore ?? null,
+    p_after_professional_id: cursor?.professionalId ?? null,
+    p_specialty_label: specialtyLabel,
+    p_delivery_mode: deliveryMode,
+    p_location: pLocation,
+  })
 
   if (error) {
     return jsonResponse({ error: error.message }, 500)
   }
 
-  const rows = (data ?? []) as ProfessionalSearchCardRow[]
-  const cards = rows
-    .map((row) => toSearchCard(row, location, specialtyLabel))
-    .filter((card): card is SearchCard => {
-      if (card === null) return false
-      if (location !== null && card.services.length === 0) return false
-      return true
-    })
+  const payload = asSearchCardsPayload(data)
+  if (!payload) {
+    return jsonResponse({ error: 'Invalid search RPC response' }, 500)
+  }
+  if (payload.error === 'invalid_location' || payload.error === 'invalid_delivery_mode') {
+    return jsonResponse({ error: payload.error === 'invalid_location' ? 'Invalid location' : 'Invalid delivery mode' }, 400)
+  }
 
-  return jsonResponse({ cards })
+  const cards = payload.cards as unknown[]
+  let nextCursor: SearchCursorWire | null = payload.nextCursor
+  const truncated = role === 'anon' && payload.rowsRead > ANON_MAX_RESULTS
+
+  if (role === 'anon') {
+    nextCursor = null
+  }
+
+  return jsonResponse({
+    cards,
+    nextCursor,
+    truncated,
+  })
 })

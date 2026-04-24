@@ -113,7 +113,10 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
   client.auth.signUp.mockResolvedValue({ error: null })
   client.auth.resetPasswordForEmail.mockResolvedValue({ error: null })
   client.auth.updateUser.mockResolvedValue({ data: { user: {} }, error: null })
-  client.functions.invoke.mockResolvedValue({ data: { cards: [] }, error: null })
+  client.functions.invoke.mockResolvedValue({
+    data: { cards: [], nextCursor: null, truncated: false },
+    error: null,
+  })
 
   return client
 }
@@ -163,17 +166,20 @@ describe('integration: routing and search', () => {
     mockSb.store.usersRow = null
     mockSb.store.profileRow = null
     mockSb.resetHandlers()
-    mockSb.functions.invoke.mockResolvedValue({ data: { cards: [] }, error: null })
+    mockSb.functions.invoke.mockResolvedValue({
+      data: { cards: [], nextCursor: null, truncated: false },
+      error: null,
+    })
   })
 
-  it('redirects unauthenticated visitors from /search to /signin', async () => {
+  it('allows unauthenticated visitors to open /search', async () => {
     mockSb.store.session = null
     renderWithApp(['/search'])
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument()
-      expect(screen.getByText(/welcome back to manoula/i)).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /^find support$/i })).toBeInTheDocument()
     })
+    expect(screen.queryByLabelText(/^email$/i)).not.toBeInTheDocument()
   })
 
   it('shows search for authenticated non-professional users', async () => {
@@ -209,7 +215,7 @@ describe('integration: routing and search', () => {
     mockSb.store.profileRow = null
     const card = makeSearchInvokeCard()
     mockSb.functions.invoke.mockResolvedValue({
-      data: { cards: [card] },
+      data: { cards: [card], nextCursor: null, truncated: false },
       error: null,
     })
 

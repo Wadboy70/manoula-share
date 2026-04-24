@@ -50,7 +50,7 @@ export const steps: StepItem[] = [
   {
     step: '1',
     title: 'Search or browse',
-    text: 'Filter by specialty, availability, and what matters most to you.',
+    text: 'Filter by specialty, location, and delivery mode to find the right fit.',
   },
   {
     step: '2',

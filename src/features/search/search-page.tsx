@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
+import { useAuth } from '@/features/auth'
 import { fetchLocationSuggestions } from '@/features/search/location.service'
 import type { LocationSuggestion } from '@/features/search/location.types'
 import { fetchSearchSpecialtyOptions } from '@/features/search/specialties.service'
@@ -11,7 +13,7 @@ import {
 } from '@/features/search/delivery-mode-filter'
 import { SearchProviderCard } from '@/features/search/search-provider-card'
 import { useSearchResults } from '@/features/search/use-search-results'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -26,12 +28,16 @@ const LOCATION_DEBOUNCE_MS = 300
 const LOCATION_MIN_QUERY_LENGTH = 3
 
 export function SearchPage() {
+  const { session } = useAuth()
   const [appliedSearchLocation, setAppliedSearchLocation] = useState<SearchLocationFilter | null>(null)
   const [selectedSpecialtyLabel, setSelectedSpecialtyLabel] = useState('')
   const specialtyLabelForSearch = selectedSpecialtyLabel.trim() === '' ? null : selectedSpecialtyLabel.trim()
-  const { loading, error, results, retry } = useSearchResults(
+  const [deliveryModeFilter, setDeliveryModeFilter] = useState<DeliveryModeFilterValue>('')
+  const deliveryModeForApi = deliveryModeFilter === '' ? null : deliveryModeFilter
+  const { loading, loadingMore, error, results, truncated, hasMore, loadMore, retry } = useSearchResults(
     appliedSearchLocation,
     specialtyLabelForSearch,
+    deliveryModeForApi,
   )
 
   const [specialtyOptions, setSpecialtyOptions] = useState<{ id: number; label: string }[]>([])
@@ -45,7 +51,6 @@ export function SearchPage() {
   const [locationError, setLocationError] = useState<string | null>(null)
   const [locationSuggestSuppressed, setLocationSuggestSuppressed] = useState(false)
   const locationRequestIdRef = useRef(0)
-  const [deliveryModeFilter, setDeliveryModeFilter] = useState<DeliveryModeFilterValue>('')
 
   useEffect(() => {
     let cancelled = false
@@ -149,8 +154,7 @@ export function SearchPage() {
                     Filters
                   </h2>
                   <CardDescription>
-                    Narrow by specialty and location on the server. Delivery mode filters the list below
-                    only (server-side delivery filtering is coming soon).
+                    Narrow results by specialty, where they work, and how you’d like to meet.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4 overflow-visible pt-0">
@@ -302,19 +306,6 @@ export function SearchPage() {
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <label
-                      htmlFor="search-filter-availability"
-                      className="text-sm leading-snug font-medium text-white"
-                    >
-                      Availability
-                    </label>
-                    <Input
-                      id="search-filter-availability"
-                      disabled
-                      placeholder="Any time"
-                    />
-                  </div>
                 </CardContent>
               </Card>
             </section>
@@ -326,7 +317,9 @@ export function SearchPage() {
                   <CardDescription>
                     {loading
                       ? 'Loading professionals...'
-                      : `Showing ${results.length} professional${results.length === 1 ? '' : 's'}.`}
+                      : session === null && truncated
+                        ? `Showing ${results.length} professionals. Sign in to browse the full directory.`
+                        : `Showing ${results.length} professional${results.length === 1 ? '' : 's'}.`}
                   </CardDescription>
                 </CardHeader>
                 {loading ? (
@@ -355,20 +348,53 @@ export function SearchPage() {
                 ) : null}
 
                 {!loading && !error && results.length > 0 ? (
-                  <CardContent className="pt-0 pb-6">
+                  <CardContent className="flex flex-col gap-4 pt-0 pb-6">
                     <ul
                       className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2"
                       aria-live="polite"
                     >
                       {results.map((card) => (
                         <li key={card.professionalId} className="flex min-h-0 min-w-0 flex-col">
-                          <SearchProviderCard
-                            card={card}
-                            deliveryModeFilter={deliveryModeFilter}
-                          />
+                          <SearchProviderCard card={card} />
                         </li>
                       ))}
+                      {session === null && truncated ? (
+                        <li className="flex min-h-0 min-w-0 flex-col lg:col-span-2">
+                          <article className="flex flex-1 flex-col justify-center rounded-xl border border-dashed border-white/20 bg-white/5 p-6 text-center">
+                            <p className="text-muted-foreground text-sm leading-relaxed">
+                              You&apos;re seeing a short preview. Create a free account to view every
+                              professional that matches your filters.
+                            </p>
+                            <div className="mt-4 flex flex-wrap justify-center gap-3">
+                              <Link
+                                to="/signin"
+                                className={buttonVariants({ variant: 'default', size: 'default' })}
+                              >
+                                Log in
+                              </Link>
+                              <Link
+                                to="/signup"
+                                className={buttonVariants({ variant: 'outline', size: 'default' })}
+                              >
+                                Sign up
+                              </Link>
+                            </div>
+                          </article>
+                        </li>
+                      ) : null}
                     </ul>
+                    {session !== null && hasMore ? (
+                      <div className="flex justify-center">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={loadingMore}
+                          onClick={() => loadMore()}
+                        >
+                          {loadingMore ? 'Loading…' : 'Load more'}
+                        </Button>
+                      </div>
+                    ) : null}
                   </CardContent>
                 ) : null}
               </Card>

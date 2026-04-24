@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { MapPin } from 'lucide-react'
 
-import type { DeliveryModeFilterValue } from '@/features/search/delivery-mode-filter'
 import type { SearchCard, SearchCardService } from '@/features/search/search.types'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -56,30 +55,24 @@ function dedupeServicesById(services: SearchCardService[]): SearchCardService[] 
 
 export type SearchProviderCardProps = {
   card: SearchCard
-  deliveryModeFilter: DeliveryModeFilterValue
   className?: string
 }
 
-export function SearchProviderCard({ card, deliveryModeFilter, className }: SearchProviderCardProps) {
+export function SearchProviderCard({ card, className }: SearchProviderCardProps) {
   const displayName = renderSearchCardName(card)
   const nameId = `search-card-name-${card.professionalId}`
   const profileHref = `/professionals/${card.professionalId}`
   const specialtyLine = specialtyDisplayLine(card)
   const services = dedupeServicesById(card.services)
 
-  const matchedServices =
-    deliveryModeFilter !== ''
-      ? services.filter((s) => s.deliveryMode === deliveryModeFilter)
-      : services
-  const otherCount =
-    deliveryModeFilter !== '' ? services.filter((s) => s.deliveryMode !== deliveryModeFilter).length : 0
-
-  const servicesHeading =
-    deliveryModeFilter !== '' ? 'Services matching your search' : 'Services'
-
   const modalities = deliveryModalityLabels(card)
   const photoAlt =
     specialtyLine.length > 0 ? `${displayName}, ${specialtyLine.split(' · ')[0]}` : displayName
+
+  const ratingLine =
+    typeof card.ratingAvg === 'number' && Number.isFinite(card.ratingAvg) && (card.ratingCount ?? 0) > 0
+      ? `${card.ratingAvg.toFixed(1)} ★ (${card.ratingCount} review${(card.ratingCount ?? 0) === 1 ? '' : 's'})`
+      : null
 
   return (
     <article
@@ -116,6 +109,10 @@ export function SearchProviderCard({ card, deliveryModeFilter, className }: Sear
             <p className="text-muted-foreground mt-0.5 text-sm">Specialties coming soon</p>
           )}
 
+          {ratingLine ? (
+            <p className="text-muted-foreground mt-1 text-xs">{ratingLine}</p>
+          ) : null}
+
           <div className="text-muted-foreground mt-2 flex items-center gap-1.5 text-sm">
             <MapPin className="size-3.5 shrink-0" aria-hidden />
             <span>{renderSearchCardLocationLabel(card)}</span>
@@ -139,34 +136,18 @@ export function SearchProviderCard({ card, deliveryModeFilter, className }: Sear
       {services.length > 0 ? (
         <div className="mt-4 min-h-0 shrink-0 border-t border-white/10 pt-4">
           <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
-            {servicesHeading}
+            Services
           </p>
-          {deliveryModeFilter !== '' && matchedServices.length === 0 ? (
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              No services match this delivery mode filter.
-              {otherCount > 0 ? (
-                <span className="mt-1 block text-xs">
-                  +{otherCount} other service{otherCount === 1 ? '' : 's'} on profile
-                </span>
-              ) : null}
-            </p>
-          ) : (
-            <div className="flex flex-wrap items-center gap-2">
-              {matchedServices.map((service) => (
-                <span
-                  key={service.id}
-                  className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
-                >
-                  {service.title}
-                </span>
-              ))}
-              {deliveryModeFilter !== '' && otherCount > 0 ? (
-                <span className="text-muted-foreground self-center text-xs">
-                  +{otherCount} more service{otherCount === 1 ? '' : 's'}
-                </span>
-              ) : null}
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {services.map((service) => (
+              <span
+                key={service.id}
+                className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+              >
+                {service.title}
+              </span>
+            ))}
+          </div>
         </div>
       ) : null}
 

@@ -15,7 +15,7 @@ vi.mock('@/features/search/use-search-results', () => ({
   useSearchResults: useSearchResultsMock,
 }))
 
-vi.mock('@/features/auth/use-auth', () => ({
+vi.mock('@/features/auth', () => ({
   useAuth: () => ({
     session: null,
     signOut: signOutMock,
@@ -29,6 +29,19 @@ vi.mock('@/features/search/location.service', () => ({
 vi.mock('@/features/search/specialties.service', () => ({
   fetchSearchSpecialtyOptions: fetchSearchSpecialtyOptionsMock,
 }))
+
+function defaultSearchHook() {
+  return {
+    loading: false,
+    loadingMore: false,
+    error: null,
+    results: [] as unknown[],
+    truncated: false,
+    hasMore: false,
+    loadMore: vi.fn(),
+    retry: vi.fn(),
+  }
+}
 
 function mockLocationSuggestion(overrides: Partial<{ id: string; label: string }> = {}) {
   return {
@@ -52,6 +65,8 @@ function renderSearchPage() {
 
 describe('SearchPage', () => {
   beforeEach(() => {
+    useSearchResultsMock.mockReset()
+    useSearchResultsMock.mockReturnValue(defaultSearchHook())
     fetchLocationSuggestionsMock.mockReset()
     fetchLocationSuggestionsMock.mockResolvedValue([])
     fetchSearchSpecialtyOptionsMock.mockReset()
@@ -63,10 +78,8 @@ describe('SearchPage', () => {
 
   it('shows loading state', () => {
     useSearchResultsMock.mockReturnValue({
+      ...defaultSearchHook(),
       loading: true,
-      error: null,
-      results: [],
-      retry: vi.fn(),
     })
 
     renderSearchPage()
@@ -74,27 +87,13 @@ describe('SearchPage', () => {
   })
 
   it('shows empty state', () => {
-    useSearchResultsMock.mockReturnValue({
-      loading: false,
-      error: null,
-      results: [],
-      retry: vi.fn(),
-    })
-
     renderSearchPage()
     expect(
       screen.getByText(/no professionals are visible yet/i),
     ).toBeInTheDocument()
   })
 
-  it('renders delivery mode filter with All plus four allowed modes', () => {
-    useSearchResultsMock.mockReturnValue({
-      loading: false,
-      error: null,
-      results: [],
-      retry: vi.fn(),
-    })
-
+  it('renders delivery mode filter with All plus three allowed modes', () => {
     renderSearchPage()
 
     const select = screen.getByRole('combobox', { name: /delivery mode/i }) as HTMLSelectElement
@@ -110,9 +109,7 @@ describe('SearchPage', () => {
 
   it('shows success state cards', () => {
     useSearchResultsMock.mockReturnValue({
-      loading: false,
-      error: null,
-      retry: vi.fn(),
+      ...defaultSearchHook(),
       results: [
         {
           professionalId: 1,
@@ -158,12 +155,10 @@ describe('SearchPage', () => {
     expect(bookLink).toHaveAttribute('href', '/professionals/1')
   })
 
-  it('shows services matching your search when a delivery mode is selected', async () => {
+  it('passes delivery mode to useSearchResults when a mode is selected', async () => {
     const user = userEvent.setup()
     useSearchResultsMock.mockReturnValue({
-      loading: false,
-      error: null,
-      retry: vi.fn(),
+      ...defaultSearchHook(),
       results: [
         {
           professionalId: 1,
@@ -197,17 +192,45 @@ describe('SearchPage', () => {
     const select = screen.getByRole('combobox', { name: /delivery mode/i })
     await user.selectOptions(select, 'in_home')
 
-    expect(screen.getByText('Services matching your search')).toBeInTheDocument()
+    expect(useSearchResultsMock).toHaveBeenLastCalledWith(null, null, 'in_home')
     const article = screen.getByRole('article', { name: /ada nwosu/i })
     expect(within(article).getByText('Follow-up visit')).toBeInTheDocument()
+  })
+
+  it('shows sign-in teaser when truncated for signed-out preview', () => {
+    useSearchResultsMock.mockReturnValue({
+      ...defaultSearchHook(),
+      truncated: true,
+      results: [
+        {
+          professionalId: 1,
+          firstName: 'A',
+          lastName: 'One',
+          profilePhotoUrl: null,
+          countryCode: 'GB',
+          locationLabel: 'London',
+          mapboxId: null,
+          latitude: null,
+          longitude: null,
+          offersRemote: true,
+          offersInHome: false,
+          offersProviderLocation: false,
+          specialties: [],
+          services: [],
+        },
+      ],
+    })
+
+    renderSearchPage()
+    expect(screen.getByText(/short preview/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /^log in$/i })).toHaveAttribute('href', '/signin')
   })
 
   it('shows error state and retry action', async () => {
     const retry = vi.fn()
     useSearchResultsMock.mockReturnValue({
-      loading: false,
+      ...defaultSearchHook(),
       error: 'Could not load results',
-      results: [],
       retry,
     })
 
@@ -220,13 +243,6 @@ describe('SearchPage', () => {
   })
 
   it('does not fetch location suggestions until query has at least 3 characters after debounce', async () => {
-    useSearchResultsMock.mockReturnValue({
-      loading: false,
-      error: null,
-      retry: vi.fn(),
-      results: [],
-    })
-
     renderSearchPage()
     const locationInput = screen.getByRole('textbox', { name: /location/i })
 
@@ -238,12 +254,6 @@ describe('SearchPage', () => {
 
   it('fetches location suggestions after debounce when query is at least 3 characters', async () => {
     fetchLocationSuggestionsMock.mockResolvedValue([mockLocationSuggestion()])
-    useSearchResultsMock.mockReturnValue({
-      loading: false,
-      error: null,
-      retry: vi.fn(),
-      results: [],
-    })
 
     renderSearchPage()
     const locationInput = screen.getByRole('textbox', { name: /location/i })
@@ -262,12 +272,6 @@ describe('SearchPage', () => {
 
   it('passes selected location into useSearchResults after choosing a suggestion', async () => {
     fetchLocationSuggestionsMock.mockResolvedValue([mockLocationSuggestion()])
-    useSearchResultsMock.mockReturnValue({
-      loading: false,
-      error: null,
-      retry: vi.fn(),
-      results: [],
-    })
 
     renderSearchPage()
     const locationInput = screen.getByRole('textbox', { name: /location/i })
@@ -289,17 +293,12 @@ describe('SearchPage', () => {
         label: 'Los Angeles, CA',
       }),
       null,
+      null,
     )
   })
 
   it('passes selected specialty label into useSearchResults', async () => {
     const user = userEvent.setup()
-    useSearchResultsMock.mockReturnValue({
-      loading: false,
-      error: null,
-      retry: vi.fn(),
-      results: [],
-    })
 
     renderSearchPage()
 
@@ -310,17 +309,11 @@ describe('SearchPage', () => {
     const specialtySelect = screen.getByRole('combobox', { name: /specialty/i })
     await user.selectOptions(specialtySelect, 'Doula')
 
-    expect(useSearchResultsMock).toHaveBeenLastCalledWith(null, 'Doula')
+    expect(useSearchResultsMock).toHaveBeenLastCalledWith(null, 'Doula', null)
   })
 
   it('fills location input when a suggestion is chosen', async () => {
     fetchLocationSuggestionsMock.mockResolvedValue([mockLocationSuggestion()])
-    useSearchResultsMock.mockReturnValue({
-      loading: false,
-      error: null,
-      retry: vi.fn(),
-      results: [],
-    })
 
     renderSearchPage()
     const locationInput = screen.getByRole('textbox', { name: /location/i })

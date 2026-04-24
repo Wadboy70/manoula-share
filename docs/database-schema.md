@@ -9,12 +9,15 @@ Public search profile for a professional (`user_id` → `users`). Used as the **
 - `mapbox_id`, `latitude`, `longitude`, `location_label`
 - Delivery flags: `offers_remote`, `offers_in_home`, `offers_provider_location`
 - Listing: `is_public_searchable`, `is_profile_complete`, `is_active`, `is_approved`, `country_code`
+- Search sort: `rating_avg`, `rating_count` (denormalized from `reviews` via trigger)
+
+For manual search QA after schema changes, run `npm run seed:local` (see [`supabase/seeds/local_search_seed.sql`](../supabase/seeds/local_search_seed.sql)).
 
 ## `services`
 
 Per-professional offerings. Search view aggregates active rows.
 
-- `delivery_mode` (e.g. remote, in_home, provider_location, hybrid)
+- `delivery_mode` (`remote`, `in_home`, `provider_location` only)
 - `service_area_type` (e.g. `place_list`, `radius`, custom)
 - `service_radius_km`, `service_area_text`
 - `specialty_id` → `specialties.label` in enriched JSON as `specialty_label`

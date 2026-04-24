@@ -10,6 +10,8 @@ vi.mock('@/lib/supabaseClient', () => ({
 
 import { fetchSearchCards } from '@/features/search/search.service'
 
+const emptyMeta = { nextCursor: null, truncated: false }
+
 describe('fetchSearchCards', () => {
   beforeEach(() => {
     invokeMock.mockReset()
@@ -45,13 +47,16 @@ describe('fetchSearchCards', () => {
             ],
           },
         ],
+        ...emptyMeta,
       },
       error: null,
     })
 
-    const cards = await fetchSearchCards()
+    const { cards, nextCursor, truncated } = await fetchSearchCards()
 
     expect(invokeMock).toHaveBeenCalledWith('search-cards', { body: {} })
+    expect(nextCursor).toBeNull()
+    expect(truncated).toBe(false)
     expect(cards).toEqual([
       {
         professionalId: 12,
@@ -66,6 +71,8 @@ describe('fetchSearchCards', () => {
         offersRemote: true,
         offersInHome: true,
         offersProviderLocation: false,
+        ratingAvg: null,
+        ratingCount: 0,
         specialties: ['Lactation Consultant'],
         services: [
           {
@@ -82,7 +89,7 @@ describe('fetchSearchCards', () => {
   })
 
   it('sends location in invoke body when a filter is provided', async () => {
-    invokeMock.mockResolvedValue({ data: { cards: [] }, error: null })
+    invokeMock.mockResolvedValue({ data: { cards: [], ...emptyMeta }, error: null })
     const loc = {
       mapboxId: 'dXJuOm1ieHBsYzp',
       latitude: 51.5,
@@ -103,15 +110,23 @@ describe('fetchSearchCards', () => {
   })
 
   it('sends specialtyLabel in invoke body when provided', async () => {
-    invokeMock.mockResolvedValue({ data: { cards: [] }, error: null })
+    invokeMock.mockResolvedValue({ data: { cards: [], ...emptyMeta }, error: null })
     await fetchSearchCards({ specialtyLabel: '  Doula  ' })
     expect(invokeMock).toHaveBeenCalledWith('search-cards', {
       body: { specialtyLabel: 'Doula' },
     })
   })
 
+  it('sends deliveryMode and limit when provided', async () => {
+    invokeMock.mockResolvedValue({ data: { cards: [], ...emptyMeta }, error: null })
+    await fetchSearchCards({ deliveryMode: 'remote', limit: 5 })
+    expect(invokeMock).toHaveBeenCalledWith('search-cards', {
+      body: { deliveryMode: 'remote', limit: 5 },
+    })
+  })
+
   it('sends location and specialtyLabel together when both are provided', async () => {
-    invokeMock.mockResolvedValue({ data: { cards: [] }, error: null })
+    invokeMock.mockResolvedValue({ data: { cards: [], ...emptyMeta }, error: null })
     const loc = {
       mapboxId: 'mb1',
       latitude: 1,
@@ -153,11 +168,12 @@ describe('fetchSearchCards', () => {
             services: null,
           },
         ],
+        ...emptyMeta,
       },
       error: null,
     })
 
-    const cards = await fetchSearchCards()
+    const { cards } = await fetchSearchCards()
     expect(cards[0]?.specialties).toEqual([])
     expect(cards[0]?.services).toEqual([])
   })

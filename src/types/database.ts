@@ -103,6 +103,8 @@ export type Database = {
           offers_in_home: boolean
           offers_provider_location: boolean
           offers_remote: boolean
+          rating_avg: number | null
+          rating_count: number
           user_id: number
         }
         Insert: {
@@ -119,6 +121,8 @@ export type Database = {
           offers_in_home?: boolean
           offers_provider_location?: boolean
           offers_remote?: boolean
+          rating_avg?: number | null
+          rating_count?: number
           user_id: number
         }
         Update: {
@@ -135,6 +139,8 @@ export type Database = {
           offers_in_home?: boolean
           offers_provider_location?: boolean
           offers_remote?: boolean
+          rating_avg?: number | null
+          rating_count?: number
           user_id?: number
         }
         Relationships: [
@@ -500,6 +506,8 @@ export type Database = {
           offers_remote: boolean | null
           professional_id: number | null
           profile_photo_url: string | null
+          rating_avg: number | null
+          rating_count: number | null
           services: Json | null
           specialties: string[] | null
         }
@@ -510,6 +518,39 @@ export type Database = {
       app_user_id_for_auth: { Args: never; Returns: number }
       is_professional_publicly_listable: {
         Args: { pro_id: number }
+        Returns: boolean
+      }
+      search_haversine_km: {
+        Args: {
+          lat1: number
+          lon1: number
+          lat2: number
+          lon2: number
+        }
+        Returns: number
+      }
+      search_professional_cards_page: {
+        Args: {
+          p_return_cap: number
+          p_probe_rows: number
+          p_after_sort_score: number | null
+          p_after_professional_id: number | null
+          p_specialty_label: string | null
+          p_delivery_mode: string | null
+          p_location: Json | null
+        }
+        Returns: Json
+      }
+      search_service_matches_location: {
+        Args: {
+          p_service_id: number
+          p_user_mapbox_id: string
+          p_user_lat: number
+          p_user_lng: number
+          p_ancestor_mapbox_ids: string[]
+          p_profile_lat: number | null
+          p_profile_lng: number | null
+        }
         Returns: boolean
       }
     }

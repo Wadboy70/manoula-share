@@ -23,14 +23,7 @@ function App() {
         <Route path="signin" element={<SignInPage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
-        <Route
-          path="search"
-          element={
-            <ProtectedRoute>
-              <SearchPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="search" element={<SearchPage />} />
         <Route
           path="professionals/:professionalId"
           element={

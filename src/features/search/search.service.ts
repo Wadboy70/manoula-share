@@ -5,6 +5,7 @@ import type {
   SearchCardsInvokePayload,
   SearchCardsInvokeRequestBody,
   SearchLocationFilter,
+  SearchPageCursor,
 } from '@/features/search/search.types'
 
 function asNullableString(value: unknown): string | null {
@@ -68,6 +69,9 @@ function parseSearchCard(entry: unknown): SearchCard | null {
     ? specialtiesRaw.filter((item): item is string => typeof item === 'string')
     : []
 
+  const ratingAvgRaw = row.ratingAvg ?? row.rating_avg
+  const ratingCountRaw = row.ratingCount ?? row.rating_count
+
   return {
     professionalId: row.professionalId,
     firstName: asNullableString(row.firstName),
@@ -81,17 +85,38 @@ function parseSearchCard(entry: unknown): SearchCard | null {
     offersRemote: asBoolean(row.offersRemote, false),
     offersInHome: asBoolean(row.offersInHome, false),
     offersProviderLocation: asBoolean(row.offersProviderLocation, false),
+    ratingAvg:
+      typeof ratingAvgRaw === 'number' && Number.isFinite(ratingAvgRaw) ? ratingAvgRaw : null,
+    ratingCount:
+      typeof ratingCountRaw === 'number' && Number.isFinite(ratingCountRaw)
+        ? Math.floor(ratingCountRaw)
+        : 0,
     specialties,
     services: parseSearchCardServices(row.services),
   }
 }
 
-function parseSearchCardsInvokePayload(data: unknown): SearchCard[] {
+function parseSearchPageCursor(raw: unknown): SearchPageCursor | null {
+  if (raw === null || raw === undefined) return null
+  if (typeof raw !== 'object' || raw === null) return null
+  const o = raw as Record<string, unknown>
+  const sortScore = o.sortScore
+  const professionalId = o.professionalId
+  if (typeof sortScore !== 'number' || !Number.isFinite(sortScore)) return null
+  if (typeof professionalId !== 'number' || !Number.isFinite(professionalId)) return null
+  return { sortScore, professionalId }
+}
+
+function parseSearchCardsInvokePayload(data: unknown): {
+  cards: SearchCard[]
+  nextCursor: SearchPageCursor | null
+  truncated: boolean
+} {
   if (typeof data !== 'object' || data === null || !('cards' in data)) {
     throw new Error('Invalid search response shape')
   }
 
-  const { cards } = data as SearchCardsInvokePayload
+  const { cards, nextCursor: nextRaw, truncated } = data as SearchCardsInvokePayload
   if (!Array.isArray(cards)) {
     throw new Error('Invalid search response shape')
   }
@@ -101,19 +126,36 @@ function parseSearchCardsInvokePayload(data: unknown): SearchCard[] {
     throw new Error('Invalid search card in response')
   }
 
-  return parsed as SearchCard[]
+  return {
+    cards: parsed as SearchCard[],
+    nextCursor: parseSearchPageCursor(nextRaw),
+    truncated: typeof truncated === 'boolean' ? truncated : false,
+  }
 }
 
 export type FetchSearchCardsOptions = {
   location?: SearchLocationFilter | null
   specialtyLabel?: string | null
+  deliveryMode?: string | null
+  limit?: number
+  cursor?: SearchPageCursor | null
 }
 
-export async function fetchSearchCards(options?: FetchSearchCardsOptions): Promise<SearchCard[]> {
+export type FetchSearchCardsResult = {
+  cards: SearchCard[]
+  nextCursor: SearchPageCursor | null
+  truncated: boolean
+}
+
+export async function fetchSearchCards(options?: FetchSearchCardsOptions): Promise<FetchSearchCardsResult> {
   const location = options?.location ?? null
   const rawSpecialty = options?.specialtyLabel ?? null
   const specialtyTrimmed =
     typeof rawSpecialty === 'string' && rawSpecialty.trim() !== '' ? rawSpecialty.trim() : null
+
+  const rawDelivery = options?.deliveryMode ?? null
+  const deliveryTrimmed =
+    typeof rawDelivery === 'string' && rawDelivery.trim() !== '' ? rawDelivery.trim() : null
 
   const body: SearchCardsInvokeRequestBody = {}
   if (location !== null) {
@@ -126,6 +168,15 @@ export async function fetchSearchCards(options?: FetchSearchCardsOptions): Promi
   }
   if (specialtyTrimmed !== null) {
     body.specialtyLabel = specialtyTrimmed
+  }
+  if (deliveryTrimmed !== null) {
+    body.deliveryMode = deliveryTrimmed
+  }
+  if (typeof options?.limit === 'number' && Number.isFinite(options.limit)) {
+    body.limit = Math.floor(options.limit)
+  }
+  if (options?.cursor !== undefined && options.cursor !== null) {
+    body.cursor = options.cursor
   }
 
   const { data, error } = await supabase.functions.invoke<SearchCardsInvokePayload>('search-cards', {

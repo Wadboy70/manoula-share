@@ -10,10 +10,12 @@ vi.mock('@/features/search/search.service', () => ({
 import type { SearchLocationFilter } from '@/features/search/search.types'
 import { useSearchResults } from '@/features/search/use-search-results'
 
+const emptyPage = { cards: [], nextCursor: null, truncated: false }
+
 describe('useSearchResults', () => {
   beforeEach(() => {
     fetchSearchCardsMock.mockReset()
-    fetchSearchCardsMock.mockResolvedValue([])
+    fetchSearchCardsMock.mockResolvedValue(emptyPage)
   })
 
   it('loads with null location then refetches when searchLocation changes', async () => {
@@ -25,35 +27,82 @@ describe('useSearchResults', () => {
     }
 
     const { rerender } = renderHook(
-      ({ loc }: { loc: SearchLocationFilter | null }) => useSearchResults(loc, null),
+      ({ loc }: { loc: SearchLocationFilter | null }) => useSearchResults(loc, null, null),
       { initialProps: { loc: null as SearchLocationFilter | null } },
     )
 
     await waitFor(() => {
-      expect(fetchSearchCardsMock).toHaveBeenCalledWith({ location: null, specialtyLabel: null })
+      expect(fetchSearchCardsMock).toHaveBeenCalledWith({
+        location: null,
+        specialtyLabel: null,
+        deliveryMode: null,
+        limit: 10,
+        cursor: null,
+      })
     })
 
     rerender({ loc: location })
 
     await waitFor(() => {
-      expect(fetchSearchCardsMock).toHaveBeenLastCalledWith({ location, specialtyLabel: null })
+      expect(fetchSearchCardsMock).toHaveBeenLastCalledWith({
+        location,
+        specialtyLabel: null,
+        deliveryMode: null,
+        limit: 10,
+        cursor: null,
+      })
     })
   })
 
   it('refetches when specialtyLabel changes', async () => {
     const { rerender } = renderHook(
-      ({ spec }: { spec: string | null }) => useSearchResults(null, spec),
+      ({ spec }: { spec: string | null }) => useSearchResults(null, spec, null),
       { initialProps: { spec: null as string | null } },
     )
 
     await waitFor(() => {
-      expect(fetchSearchCardsMock).toHaveBeenCalledWith({ location: null, specialtyLabel: null })
+      expect(fetchSearchCardsMock).toHaveBeenCalledWith({
+        location: null,
+        specialtyLabel: null,
+        deliveryMode: null,
+        limit: 10,
+        cursor: null,
+      })
     })
 
     rerender({ spec: 'Doula' })
 
     await waitFor(() => {
-      expect(fetchSearchCardsMock).toHaveBeenLastCalledWith({ location: null, specialtyLabel: 'Doula' })
+      expect(fetchSearchCardsMock).toHaveBeenLastCalledWith({
+        location: null,
+        specialtyLabel: 'Doula',
+        deliveryMode: null,
+        limit: 10,
+        cursor: null,
+      })
+    })
+  })
+
+  it('refetches when deliveryMode changes', async () => {
+    const { rerender } = renderHook(
+      ({ mode }: { mode: string | null }) => useSearchResults(null, null, mode),
+      { initialProps: { mode: null as string | null } },
+    )
+
+    await waitFor(() => {
+      expect(fetchSearchCardsMock).toHaveBeenCalled()
+    })
+
+    rerender({ mode: 'remote' })
+
+    await waitFor(() => {
+      expect(fetchSearchCardsMock).toHaveBeenLastCalledWith({
+        location: null,
+        specialtyLabel: null,
+        deliveryMode: 'remote',
+        limit: 10,
+        cursor: null,
+      })
     })
   })
 })
