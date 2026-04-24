@@ -4,12 +4,12 @@ React (Vite) + TypeScript + Tailwind + shadcn/ui + Supabase. Product context: [`
 
 ## Architecture (`src/`)
 
-- **`src/features/<domain>/`** — Domain logic: services, hooks, types, feature UI, and colocated `*.test.*` files. Examples: `features/search`, `features/auth`, `features/home`, `features/professionals`.
+- **`src/features/<domain>/`** — Domain logic: services, hooks, types, feature UI, and colocated `*.test.*` files. Examples: `features/search`, `features/auth`, `features/home`, `features/professionals` (includes the professional dashboard route screen).
 - **`src/pages/`** — Thin route screens: compose layout and render feature entry components. Prefer adding new behavior under `features/`, not only under `pages/`.
 - **`src/components/ui/`** — shadcn primitives.
 - **`src/components/`** — Shared app chrome and reusable blocks that are not tied to a single feature.
 - **`src/lib/`** — Shared utilities and the Supabase client ([`src/lib/supabaseClient.ts`](src/lib/supabaseClient.ts)).
-- **`src/types/database.ts`** — Generated from Supabase; do not hand-edit (regenerate after schema changes).
+- **`src/types/database.ts`** — Generated from Supabase; do not hand-edit (regenerate after schema changes). The output path can stay here unless the team standardizes a different location (e.g. `src/types/supabase/database.ts`); update `supabase gen types` and imports together if you move it.
 
 ## Testing layout
 
