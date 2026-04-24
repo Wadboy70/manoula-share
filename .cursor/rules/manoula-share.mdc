@@ -13,6 +13,14 @@ Goal: build a **production-ready** application within the constraints below. Pro
 - Prefer **clean, modular functional components** and hooks.
 - Follow the **shadcn/ui** layout: primitives in `components/ui`, composed **blocks** in `components` (and pages/routes as appropriate).
 
+### 1.1 Repository layout (`src/`)
+
+- **Feature slices:** New product domains belong under **`src/features/<domain>/`** (services, hooks, domain types, feature UI, colocated **`*.test.*`**). Examples: `features/search`, `features/auth`, `features/home`, `features/professionals`.
+- **Route pages:** **`src/pages/`** holds **thin** route screens that compose layout and feature entry points—avoid growing new domain logic only under `pages/` when the behavior belongs in `features/<domain>/`.
+- **Shared components:** **`components/ui`** = shadcn primitives; **`components/`** = app-wide chrome and reusable non-domain blocks. If a component encodes **one feature’s** rules and is not reused across routes, keep it under that feature folder, not root `components/`.
+- **Generated types:** **`src/types/database.ts`** is produced by **`supabase gen types`**—never hand-edit; regenerate after schema changes. Prefer domain-specific types in **`src/features/<domain>/`** (or `*.types.ts`) instead of unrelated DTOs under `src/types/`.
+- **Doc and comment hygiene:** References in seeds, migration comments, README, or rules to paths under **`docs/`** (or versioned **`notes/`** if ever allowed) must point to **files that exist in the repo** in the same change—add the file or fix the path.
+
 ## 2. Database & auth (Supabase)
 
 - Use the **`@supabase/supabase-js`** client for all data access.
@@ -64,7 +72,7 @@ The version in `.nvmrc` is authoritative; tooling (ESLint 9, Vite 8, etc.) is no
 
 - **Runner:** **Vitest** with **`environment: 'jsdom'`** (configured in `vite.config.ts`). Shared setup lives in **`src/test/setup.ts`** (`@testing-library/jest-dom/vitest` matchers and **`afterEach` cleanup** from `@testing-library/react` so mounted trees do not accumulate between tests).
 - **Imports:** Import **`describe`**, **`it`**, **`expect`**, **`vi`**, etc. from **`vitest`** explicitly (no Vitest `globals` mode) unless the project later standardizes otherwise.
-- **Layout:** **Colocate** unit tests as **`*.test.ts`** / **`*.test.tsx`** next to the module under **`src/`**. Put broader route or multi-surface checks under **`src/__tests__/`** (or a dedicated `src/integration/` folder if you introduce it—keep one convention per repo).
+- **Layout:** **Colocate** unit tests as **`*.test.ts`** / **`*.test.tsx`** next to the module under **`src/`**. Put cross-route / auth / search integration flows **only** under **`src/__tests__/integration/`**. Use **`src/test/`** for Vitest **`setup.ts`**, shared mocks, and **`src/test/integration/fixtures.ts`**—do **not** add a second parallel integration root (e.g. duplicate `src/integration/` for the same flows).
 - **Queries:** Prefer **RTL** accessible queries (**`getByRole`**, **`getByLabelText`**, …). Use **`@testing-library/user-event`** for interactions. When the UI repeats roles (e.g. multiple cards), scope with **`within(container)`**—e.g. resolve the card with **`container.querySelector('[data-slot="card"]')`** or another stable hook, then query inside it.
 - **Forms / HTML5 validation:** In jsdom, native **`required`** fields can block **`click`** on submit from firing **`onSubmit`**. To assert **client-side validation** paths, use **`fireEvent.submit(form)`** on the relevant **`<form>`** so React’s handler runs without relying on the browser’s constraint pipeline.
 - **Supabase in tests:** **`vi.mock('@/lib/supabaseClient')`** and define **`auth.signUp`** (and other methods) with **`vi.fn`**. Define the mock function inside **`vi.hoisted(() => …)`** so Vitest hoists it safely—**do not** call a helper imported from another module inside `vi.hoisted` in a way that hits the temporal dead zone. Prefer **`vi.fn(async () => ({ error: null }))`** (or realistic errors) inline in `vi.hoisted`, and use **`src/test/mocks/supabase.ts`** for **shared types / documentation**, not for code that must run inside the hoisted initializer.
