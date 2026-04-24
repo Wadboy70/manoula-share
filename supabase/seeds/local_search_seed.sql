@@ -1,7 +1,7 @@
 -- Local-only seed data for manual search testing (specialties, professionals, services, geo).
 -- Safe to run repeatedly (`supabase db query --local --file ...` or via seed:local script).
 --
--- Geographic columns follow `notes/database-schema.md`:
+-- Geographic columns follow `docs/database-schema.md`:
 --   professional_search_profiles: base/home Mapbox place (radius checks use this lat/lng).
 --   services: delivery_mode, service_area_type, service_radius_km, service_area_text.
 --   service_area_places: explicit cities/regions for service_area_type = place_list.

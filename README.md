@@ -1,19 +1,25 @@
-# React + Vite
+# Manoula Share
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React (Vite) + TypeScript + Tailwind + shadcn/ui + Supabase. Product context: [`PROJECT-DESCRIPTION.md`](PROJECT-DESCRIPTION.md).
 
-Currently, two official plugins are available:
+## Architecture (`src/`)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **`src/features/<domain>/`** — Domain logic: services, hooks, types, feature UI, and colocated `*.test.*` files. Examples: `features/search`, `features/auth`, `features/home`, `features/professionals`.
+- **`src/pages/`** — Thin route screens: compose layout and render feature entry components. Prefer adding new behavior under `features/`, not only under `pages/`.
+- **`src/components/ui/`** — shadcn primitives.
+- **`src/components/`** — Shared app chrome and reusable blocks that are not tied to a single feature.
+- **`src/lib/`** — Shared utilities and the Supabase client ([`src/lib/supabaseClient.ts`](src/lib/supabaseClient.ts)).
+- **`src/types/database.ts`** — Generated from Supabase; do not hand-edit (regenerate after schema changes).
 
-## React Compiler
+## Testing layout
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Unit / component tests:** colocate as `*.test.ts` or `*.test.tsx` next to the module under `src/`.
+- **Integration / cross-route flows:** only under [`src/__tests__/integration/`](src/__tests__/integration/) (e.g. auth, routing, search across surfaces).
+- **Shared test harness:** [`src/test/setup.ts`](src/test/setup.ts), mocks, and [`src/test/integration/fixtures.ts`](src/test/integration/fixtures.ts) for data builders—do not add a second parallel integration root.
 
-## Expanding the ESLint configuration
+Run **`npm run test:run`** before committing structural changes.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Search/geo table overview for seeds: [`docs/database-schema.md`](docs/database-schema.md).
 
 ## Supabase targets and local seeds
 
@@ -36,5 +42,26 @@ If you are developing a production application, we recommend using TypeScript wi
 
 ### Seed helpers
 
-- `npm run seed:local` -> apply `supabase/seeds/local_search_seed.sql` to local DB
-- `npm run seed:local:reset` -> reset local DB and then apply seed
+- `npm run seed:local` → apply `supabase/seeds/local_search_seed.sql` to local DB
+- `npm run seed:local:reset` → reset local DB and then apply seed
+
+### Generated TypeScript types
+
+After remote schema changes, regenerate app types, for example:
+
+```bash
+supabase gen types typescript --linked > src/types/database.ts
+```
+
+(Use your linked project flags as documented in the Supabase CLI.)
+
+## React + Vite (template reference)
+
+Official Vite React plugins:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc/README.md)
+
+## Expanding ESLint
+
+For type-aware lint rules see the [TypeScript ESLint](https://typescript-eslint.io) docs and the [Vite React TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts).
