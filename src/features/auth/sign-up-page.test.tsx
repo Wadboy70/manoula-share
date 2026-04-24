@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
-import { SignUpPage } from '@/pages/sign-up-page'
+import { SignUpPage } from '@/features/auth/sign-up-page'
 
 const authSignUpMock = vi.hoisted(() =>
   vi.fn(async (): Promise<{ error: { message: string } | null }> => ({

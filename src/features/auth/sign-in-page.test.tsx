@@ -3,8 +3,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
-import { SignInPage } from '@/pages/sign-in-page'
-import { SearchPage } from '@/pages/search-page'
+import { SearchPage } from '@/features/search/search-page'
+import { SignInPage } from '@/features/auth/sign-in-page'
 import type { AppUser } from '@/types/auth'
 
 const signInWithPasswordMock = vi.hoisted(() =>

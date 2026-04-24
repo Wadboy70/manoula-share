@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event'
 
 import { DELIVERY_MODES, DELIVERY_MODE_LABELS } from '@/features/search/delivery-mode-filter'
-import { SearchPage } from '@/pages/search-page'
+import { SearchPage } from '@/features/search/search-page'
 
 const useSearchResultsMock = vi.hoisted(() => vi.fn())
 const signOutMock = vi.hoisted(() => vi.fn())
