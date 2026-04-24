@@ -12,7 +12,10 @@ type UseSearchResults = {
 
 const GENERIC_ERROR = 'We could not load search results. Please try again.'
 
-export function useSearchResults(searchLocation: SearchLocationFilter | null): UseSearchResults {
+export function useSearchResults(
+  searchLocation: SearchLocationFilter | null,
+  specialtyLabel: string | null = null,
+): UseSearchResults {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<SearchCard[]>([])
@@ -24,6 +27,7 @@ export function useSearchResults(searchLocation: SearchLocationFilter | null): U
     try {
       const next = await fetchSearchCards({
         location: searchLocation,
+        specialtyLabel,
       })
       setResults(next)
     } catch (err) {
@@ -33,7 +37,7 @@ export function useSearchResults(searchLocation: SearchLocationFilter | null): U
     } finally {
       setLoading(false)
     }
-  }, [searchLocation])
+  }, [searchLocation, specialtyLabel])
 
   useEffect(() => {
     void load()

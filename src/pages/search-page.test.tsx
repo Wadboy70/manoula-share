@@ -9,12 +9,13 @@ import { SearchPage } from '@/pages/search-page'
 const useSearchResultsMock = vi.hoisted(() => vi.fn())
 const signOutMock = vi.hoisted(() => vi.fn())
 const fetchLocationSuggestionsMock = vi.hoisted(() => vi.fn())
+const fetchSearchSpecialtyOptionsMock = vi.hoisted(() => vi.fn())
 
 vi.mock('@/features/search/use-search-results', () => ({
   useSearchResults: useSearchResultsMock,
 }))
 
-vi.mock('@/hooks/use-auth', () => ({
+vi.mock('@/features/auth/use-auth', () => ({
   useAuth: () => ({
     session: null,
     signOut: signOutMock,
@@ -23,6 +24,10 @@ vi.mock('@/hooks/use-auth', () => ({
 
 vi.mock('@/features/search/location.service', () => ({
   fetchLocationSuggestions: fetchLocationSuggestionsMock,
+}))
+
+vi.mock('@/features/search/specialties.service', () => ({
+  fetchSearchSpecialtyOptions: fetchSearchSpecialtyOptionsMock,
 }))
 
 function mockLocationSuggestion(overrides: Partial<{ id: string; label: string }> = {}) {
@@ -49,6 +54,11 @@ describe('SearchPage', () => {
   beforeEach(() => {
     fetchLocationSuggestionsMock.mockReset()
     fetchLocationSuggestionsMock.mockResolvedValue([])
+    fetchSearchSpecialtyOptionsMock.mockReset()
+    fetchSearchSpecialtyOptionsMock.mockResolvedValue([
+      { id: 1, label: 'Lactation Consultant', slug: 'lactation-consultant' },
+      { id: 2, label: 'Doula', slug: 'doula' },
+    ])
   })
 
   it('shows loading state', () => {
@@ -278,7 +288,29 @@ describe('SearchPage', () => {
         ancestorMapboxIds: ['mb-ca', 'mb-us'],
         label: 'Los Angeles, CA',
       }),
+      null,
     )
+  })
+
+  it('passes selected specialty label into useSearchResults', async () => {
+    const user = userEvent.setup()
+    useSearchResultsMock.mockReturnValue({
+      loading: false,
+      error: null,
+      retry: vi.fn(),
+      results: [],
+    })
+
+    renderSearchPage()
+
+    await waitFor(() => {
+      expect(fetchSearchSpecialtyOptionsMock).toHaveBeenCalled()
+    })
+
+    const specialtySelect = screen.getByRole('combobox', { name: /specialty/i })
+    await user.selectOptions(specialtySelect, 'Doula')
+
+    expect(useSearchResultsMock).toHaveBeenLastCalledWith(null, 'Doula')
   })
 
   it('fills location input when a suggestion is chosen', async () => {

@@ -72,6 +72,17 @@ export type SearchLocationFilter = {
   label?: string
 }
 
+/** POST body for `search-cards` (fields the SPA sends). */
+export type SearchCardsInvokeRequestBody = {
+  location?: {
+    mapboxId: string
+    latitude: number
+    longitude: number
+    ancestorMapboxIds: string[]
+  }
+  specialtyLabel?: string
+}
+
 /** JSON body from the `search-cards` Edge Function (camelCase cards). */
 export type SearchCardsInvokePayload = {
   cards: SearchCard[]

@@ -315,14 +315,24 @@ function filterServicesForLocation(
   return out
 }
 
-function toSearchCard(row: ProfessionalSearchCardRow, location: SearchLocationFilter | null): SearchCard | null {
+function toSearchCard(
+  row: ProfessionalSearchCardRow,
+  location: SearchLocationFilter | null,
+  specialtyLabel: string | null,
+): SearchCard | null {
   if (row.professional_id === null) return null
 
   const parsedServices = parseServicesFromRow(row.services)
+  let servicesForGeo = parsedServices
+  if (specialtyLabel !== null) {
+    servicesForGeo = parsedServices.filter((s) => s.specialtyLabel === specialtyLabel)
+    if (servicesForGeo.length === 0) return null
+  }
+
   const services =
     location !== null
-      ? filterServicesForLocation(parsedServices, row.latitude, row.longitude, location)
-      : parsedServices.map(toServiceWire)
+      ? filterServicesForLocation(servicesForGeo, row.latitude, row.longitude, location)
+      : servicesForGeo.map(toServiceWire)
 
   return {
     professionalId: row.professional_id,
@@ -417,6 +427,36 @@ function parseLocationFilter(body: unknown): ParseLocationResult {
   }
 }
 
+const MAX_SPECIALTY_LABEL_LEN = 200
+
+type ParseSpecialtyLabelResult =
+  | { ok: true; specialtyLabel: string | null }
+  | { ok: false; message: string }
+
+function parseSpecialtyLabel(body: unknown): ParseSpecialtyLabelResult {
+  if (typeof body !== 'object' || body === null) {
+    return { ok: true, specialtyLabel: null }
+  }
+  if (!('specialtyLabel' in body)) {
+    return { ok: true, specialtyLabel: null }
+  }
+  const raw = (body as { specialtyLabel: unknown }).specialtyLabel
+  if (raw === undefined || raw === null) {
+    return { ok: true, specialtyLabel: null }
+  }
+  if (typeof raw !== 'string') {
+    return { ok: false, message: 'specialtyLabel must be a string when provided' }
+  }
+  const trimmed = raw.trim()
+  if (trimmed === '') {
+    return { ok: true, specialtyLabel: null }
+  }
+  if (trimmed.length > MAX_SPECIALTY_LABEL_LEN) {
+    return { ok: false, message: 'specialtyLabel is too long' }
+  }
+  return { ok: true, specialtyLabel: trimmed }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -433,6 +473,12 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: parsedLoc.message }, 400)
   }
   const location = parsedLoc.location
+
+  const parsedSpecialty = parseSpecialtyLabel(body)
+  if (!parsedSpecialty.ok) {
+    return jsonResponse({ error: parsedSpecialty.message }, 400)
+  }
+  const specialtyLabel = parsedSpecialty.specialtyLabel
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
@@ -456,7 +502,7 @@ Deno.serve(async (req) => {
 
   const rows = (data ?? []) as ProfessionalSearchCardRow[]
   const cards = rows
-    .map((row) => toSearchCard(row, location))
+    .map((row) => toSearchCard(row, location, specialtyLabel))
     .filter((card): card is SearchCard => {
       if (card === null) return false
       if (location !== null && card.services.length === 0) return false

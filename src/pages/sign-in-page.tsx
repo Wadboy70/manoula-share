@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { useAuth } from '@/hooks/use-auth'
+import { useAuth } from '@/features/auth'
 import { supabase } from '@/lib/supabaseClient'
 import { cn } from '@/lib/utils'
 

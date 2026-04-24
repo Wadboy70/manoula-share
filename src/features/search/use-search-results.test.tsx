@@ -25,18 +25,35 @@ describe('useSearchResults', () => {
     }
 
     const { rerender } = renderHook(
-      ({ loc }: { loc: SearchLocationFilter | null }) => useSearchResults(loc),
+      ({ loc }: { loc: SearchLocationFilter | null }) => useSearchResults(loc, null),
       { initialProps: { loc: null as SearchLocationFilter | null } },
     )
 
     await waitFor(() => {
-      expect(fetchSearchCardsMock).toHaveBeenCalledWith({ location: null })
+      expect(fetchSearchCardsMock).toHaveBeenCalledWith({ location: null, specialtyLabel: null })
     })
 
     rerender({ loc: location })
 
     await waitFor(() => {
-      expect(fetchSearchCardsMock).toHaveBeenLastCalledWith({ location })
+      expect(fetchSearchCardsMock).toHaveBeenLastCalledWith({ location, specialtyLabel: null })
+    })
+  })
+
+  it('refetches when specialtyLabel changes', async () => {
+    const { rerender } = renderHook(
+      ({ spec }: { spec: string | null }) => useSearchResults(null, spec),
+      { initialProps: { spec: null as string | null } },
+    )
+
+    await waitFor(() => {
+      expect(fetchSearchCardsMock).toHaveBeenCalledWith({ location: null, specialtyLabel: null })
+    })
+
+    rerender({ spec: 'Doula' })
+
+    await waitFor(() => {
+      expect(fetchSearchCardsMock).toHaveBeenLastCalledWith({ location: null, specialtyLabel: 'Doula' })
     })
   })
 })

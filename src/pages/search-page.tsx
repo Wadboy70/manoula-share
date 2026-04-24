@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { fetchLocationSuggestions } from '@/features/search/location.service'
 import type { LocationSuggestion } from '@/features/search/location.types'
+import { fetchSearchSpecialtyOptions } from '@/features/search/specialties.service'
 import type { SearchLocationFilter } from '@/features/search/search.types'
 import {
   DELIVERY_MODES,
@@ -26,7 +27,16 @@ const LOCATION_MIN_QUERY_LENGTH = 3
 
 export function SearchPage() {
   const [appliedSearchLocation, setAppliedSearchLocation] = useState<SearchLocationFilter | null>(null)
-  const { loading, error, results, retry } = useSearchResults(appliedSearchLocation)
+  const [selectedSpecialtyLabel, setSelectedSpecialtyLabel] = useState('')
+  const specialtyLabelForSearch = selectedSpecialtyLabel.trim() === '' ? null : selectedSpecialtyLabel.trim()
+  const { loading, error, results, retry } = useSearchResults(
+    appliedSearchLocation,
+    specialtyLabelForSearch,
+  )
+
+  const [specialtyOptions, setSpecialtyOptions] = useState<{ id: number; label: string }[]>([])
+  const [specialtiesLoading, setSpecialtiesLoading] = useState(true)
+  const [specialtiesError, setSpecialtiesError] = useState<string | null>(null)
 
   const [locationInput, setLocationInput] = useState('')
   const [debouncedLocationQuery, setDebouncedLocationQuery] = useState('')
@@ -36,6 +46,32 @@ export function SearchPage() {
   const [locationSuggestSuppressed, setLocationSuggestSuppressed] = useState(false)
   const locationRequestIdRef = useRef(0)
   const [deliveryModeFilter, setDeliveryModeFilter] = useState<DeliveryModeFilterValue>('')
+
+  useEffect(() => {
+    let cancelled = false
+    setSpecialtiesLoading(true)
+    setSpecialtiesError(null)
+    void (async () => {
+      try {
+        const rows = await fetchSearchSpecialtyOptions()
+        if (!cancelled) {
+          setSpecialtyOptions(rows.map((r) => ({ id: r.id, label: r.label })))
+        }
+      } catch {
+        if (!cancelled) {
+          setSpecialtyOptions([])
+          setSpecialtiesError('Could not load specialties.')
+        }
+      } finally {
+        if (!cancelled) {
+          setSpecialtiesLoading(false)
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -113,8 +149,8 @@ export function SearchPage() {
                     Filters
                   </h2>
                   <CardDescription>
-                    Narrow by specialty, location, and delivery mode (server-side filtering for delivery
-                    mode is coming soon).
+                    Narrow by specialty and location on the server. Delivery mode filters the list below
+                    only (server-side delivery filtering is coming soon).
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4 overflow-visible pt-0">
@@ -125,11 +161,38 @@ export function SearchPage() {
                     >
                       Specialty
                     </label>
-                    <Input
-                      id="search-filter-specialty"
-                      disabled
-                      placeholder="All specialties"
-                    />
+                    <div className="relative">
+                      <select
+                        id="search-filter-specialty"
+                        value={selectedSpecialtyLabel}
+                        onChange={(e) => {
+                          setSelectedSpecialtyLabel(e.target.value)
+                        }}
+                        disabled={specialtiesLoading || specialtyOptions.length === 0}
+                        className={cn(
+                          'border-input bg-input/30 text-foreground h-8 w-full min-w-0 appearance-none rounded-lg border py-1 pl-2.5 pr-9 text-sm outline-none',
+                          'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3',
+                          'disabled:cursor-not-allowed disabled:opacity-60',
+                        )}
+                      >
+                        <option value="">All specialties</option>
+                        {specialtyOptions.map((opt) => (
+                          <option key={opt.id} value={opt.label}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2"
+                        aria-hidden
+                      />
+                    </div>
+                    {specialtiesLoading ? (
+                      <p className="text-muted-foreground text-xs">Loading specialties…</p>
+                    ) : null}
+                    {specialtiesError ? (
+                      <p className="text-destructive text-xs leading-relaxed">{specialtiesError}</p>
+                    ) : null}
                   </div>
                   <div className="flex flex-col gap-2">
                     <label

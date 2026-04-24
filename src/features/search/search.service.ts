@@ -3,6 +3,7 @@ import type {
   SearchCard,
   SearchCardService,
   SearchCardsInvokePayload,
+  SearchCardsInvokeRequestBody,
   SearchLocationFilter,
 } from '@/features/search/search.types'
 
@@ -105,24 +106,30 @@ function parseSearchCardsInvokePayload(data: unknown): SearchCard[] {
 
 export type FetchSearchCardsOptions = {
   location?: SearchLocationFilter | null
+  specialtyLabel?: string | null
 }
 
 export async function fetchSearchCards(options?: FetchSearchCardsOptions): Promise<SearchCard[]> {
   const location = options?.location ?? null
-  const body =
-    location !== null
-      ? {
-          location: {
-            mapboxId: location.mapboxId,
-            latitude: location.latitude,
-            longitude: location.longitude,
-            ancestorMapboxIds: location.ancestorMapboxIds,
-          },
-        }
-      : {}
+  const rawSpecialty = options?.specialtyLabel ?? null
+  const specialtyTrimmed =
+    typeof rawSpecialty === 'string' && rawSpecialty.trim() !== '' ? rawSpecialty.trim() : null
+
+  const body: SearchCardsInvokeRequestBody = {}
+  if (location !== null) {
+    body.location = {
+      mapboxId: location.mapboxId,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      ancestorMapboxIds: location.ancestorMapboxIds,
+    }
+  }
+  if (specialtyTrimmed !== null) {
+    body.specialtyLabel = specialtyTrimmed
+  }
 
   const { data, error } = await supabase.functions.invoke<SearchCardsInvokePayload>('search-cards', {
-    body,
+    body: Object.keys(body).length > 0 ? body : {},
   })
 
   if (error) {

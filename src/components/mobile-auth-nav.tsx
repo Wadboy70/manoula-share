@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { AuthNavActions } from '@/components/auth-nav-actions'
-import { useAuth } from '@/hooks/use-auth'
+import { useAuth } from '@/features/auth'
 
 export function MobileAuthNav() {
   const navigate = useNavigate()

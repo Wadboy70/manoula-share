@@ -102,6 +102,36 @@ describe('fetchSearchCards', () => {
     })
   })
 
+  it('sends specialtyLabel in invoke body when provided', async () => {
+    invokeMock.mockResolvedValue({ data: { cards: [] }, error: null })
+    await fetchSearchCards({ specialtyLabel: '  Doula  ' })
+    expect(invokeMock).toHaveBeenCalledWith('search-cards', {
+      body: { specialtyLabel: 'Doula' },
+    })
+  })
+
+  it('sends location and specialtyLabel together when both are provided', async () => {
+    invokeMock.mockResolvedValue({ data: { cards: [] }, error: null })
+    const loc = {
+      mapboxId: 'mb1',
+      latitude: 1,
+      longitude: 2,
+      ancestorMapboxIds: [],
+    }
+    await fetchSearchCards({ location: loc, specialtyLabel: 'Lactation Consultant' })
+    expect(invokeMock).toHaveBeenCalledWith('search-cards', {
+      body: {
+        location: {
+          mapboxId: 'mb1',
+          latitude: 1,
+          longitude: 2,
+          ancestorMapboxIds: [],
+        },
+        specialtyLabel: 'Lactation Consultant',
+      },
+    })
+  })
+
   it('normalizes null specialties to an empty array', async () => {
     invokeMock.mockResolvedValue({
       data: {

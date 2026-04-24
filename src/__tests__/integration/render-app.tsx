@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { render, type RenderResult } from '@testing-library/react'
 
 import App from '@/App'
-import { AuthProvider } from '@/contexts/auth-context'
+import { AuthProvider } from '@/features/auth'
 
 export function renderWithApp(
   initialEntries: string[] = ['/'],

@@ -47,7 +47,7 @@ vi.mock('@/lib/supabaseClient', () => ({
   },
 }))
 
-vi.mock('@/hooks/use-auth', () => ({
+vi.mock('@/features/auth/use-auth', () => ({
   useAuth: () => ({
     loadAppUser: loadAppUserMock,
     session: null,
