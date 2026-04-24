@@ -1,4 +1,4 @@
-import type { SpecialtyItem, StepItem, TestimonialItem } from '@/types/home'
+import type { SpecialtyItem, StepItem, TestimonialItem } from '@/features/home/home.types'
 
 /** Hero / brand (aligned with ma noula marketing tone) */
 export const heroTagline =

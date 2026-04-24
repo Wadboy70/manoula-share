@@ -2,7 +2,7 @@ import {
   footerEmail,
   footerLocation,
   footerTagline,
-} from '@/data/home-content'
+} from '@/features/home/home-content'
 
 export function SiteFooter() {
   const year = new Date().getFullYear()
