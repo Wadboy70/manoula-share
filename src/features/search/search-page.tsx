@@ -143,7 +143,7 @@ export function SearchPage() {
           <div className="grid flex-1 grid-cols-1 gap-8 lg:grid-cols-[minmax(260px,320px)_1fr] lg:items-start">
             <section
               aria-labelledby="search-filters-heading"
-              className="overflow-visible lg:sticky lg:top-6"
+              className="overflow-visible lg:sticky lg:top-[var(--site-header-sticky-offset)]"
             >
               <Card className="overflow-visible">
                 <CardHeader>
