@@ -6,7 +6,7 @@ import { useAuth } from '@/features/auth'
 
 export function MobileAuthNav() {
   const navigate = useNavigate()
-  const { session, signOut } = useAuth()
+  const { session, appUser, loading: authLoading, signOut } = useAuth()
   const [loggingOut, setLoggingOut] = useState(false)
 
   async function onLogout() {
@@ -26,6 +26,8 @@ export function MobileAuthNav() {
     >
       <AuthNavActions
         session={session}
+        appUser={appUser}
+        authLoading={authLoading}
         loggingOut={loggingOut}
         onLogout={onLogout}
         variant="mobile"

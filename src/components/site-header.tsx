@@ -15,7 +15,7 @@ import { useAuth } from '@/features/auth'
 
 export function SiteHeader() {
   const navigate = useNavigate()
-  const { session, signOut } = useAuth()
+  const { session, appUser, loading: authLoading, signOut } = useAuth()
   const [loggingOut, setLoggingOut] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -60,6 +60,8 @@ export function SiteHeader() {
               </SheetHeader>
               <AuthNavActions
                 session={session}
+                appUser={appUser}
+                authLoading={authLoading}
                 loggingOut={loggingOut}
                 onLogout={onLogout}
                 variant="sheet"

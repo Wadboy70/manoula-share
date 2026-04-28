@@ -294,6 +294,51 @@ describe('integration: routing and search', () => {
     expect(inPanel.getByRole('link', { name: /^log in$/i })).toHaveAttribute('href', '/signin')
     expect(inPanel.getByRole('link', { name: /^sign up$/i })).toHaveAttribute('href', '/signup')
   })
+
+  it('shows Dashboard in the account sheet when signed in as a professional', async () => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ is_professional: true })
+    mockSb.store.profileRow = makeProfessionalProfileRow({ user_id: 1 })
+
+    renderWithApp(['/search'])
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^find support$/i })).toBeInTheDocument()
+    })
+
+    const u = userEvent.setup()
+    await u.click(screen.getByRole('button', { name: /open menu/i }))
+
+    await waitFor(() => {
+      const panel = screen.getByRole('dialog')
+      expect(within(panel).getByRole('link', { name: /^dashboard$/i })).toHaveAttribute(
+        'href',
+        '/dashboard',
+      )
+    })
+  })
+
+  it('shows Join as a professional in the account sheet when signed in as a client', async () => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ is_professional: false })
+    mockSb.store.profileRow = null
+
+    renderWithApp(['/search'])
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^find support$/i })).toBeInTheDocument()
+    })
+
+    const u = userEvent.setup()
+    await u.click(screen.getByRole('button', { name: /open menu/i }))
+
+    await waitFor(() => {
+      const panel = screen.getByRole('dialog')
+      expect(
+        within(panel).getByRole('link', { name: /join as a professional/i }),
+      ).toHaveAttribute('href', '/signup/professional')
+    })
+  })
 })
 
 describe('integration: forgot password', () => {

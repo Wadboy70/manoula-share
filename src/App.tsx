@@ -5,7 +5,14 @@ import {
   ProtectedRoute,
 } from '@/components/auth/protected-route'
 import { SiteChrome } from '@/components/site-chrome'
-import { DashboardPage } from '@/pages/dashboard-page'
+import { SignUpRoutesLayout } from '@/features/auth/sign-up-routes-layout'
+import {
+  DashboardLayout,
+  DashboardOverviewPage,
+  DashboardProfilePlaceholderPage,
+  DashboardServicesPlaceholderPage,
+  DashboardSettingsPlaceholderPage,
+} from '@/pages/dashboard-page'
 import { ForgotPasswordPage } from '@/pages/forgot-password-page'
 import { HomePage } from '@/pages/home-page'
 import { ResetPasswordPage } from '@/pages/reset-password-page'
@@ -19,7 +26,10 @@ function App() {
     <Routes>
       <Route element={<SiteChrome />}>
         <Route index element={<HomePage />} />
-        <Route path="signup" element={<SignUpPage />} />
+        <Route path="signup" element={<SignUpRoutesLayout />}>
+          <Route index element={<SignUpPage />} />
+          <Route path="professional" element={<SignUpPage />} />
+        </Route>
         <Route path="signin" element={<SignInPage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
@@ -36,10 +46,15 @@ function App() {
           path="dashboard"
           element={
             <ProfessionalOnlyRoute>
-              <DashboardPage />
+              <DashboardLayout />
             </ProfessionalOnlyRoute>
           }
-        />
+        >
+          <Route index element={<DashboardOverviewPage />} />
+          <Route path="profile" element={<DashboardProfilePlaceholderPage />} />
+          <Route path="services" element={<DashboardServicesPlaceholderPage />} />
+          <Route path="settings" element={<DashboardSettingsPlaceholderPage />} />
+        </Route>
       </Route>
     </Routes>
   )
