@@ -42,7 +42,7 @@ describe('fetchLocationSuggestions', () => {
 
     const suggestions = await fetchLocationSuggestions('Los An')
 
-    expect(invokeMock).toHaveBeenCalledWith('location', { body: { query: 'Los An' } })
+    expect(invokeMock).toHaveBeenCalledWith('location', { body: { query: 'Los An', mode: 'search' } })
     expect(suggestions).toEqual([
       {
         id: 'mapbox-1',
@@ -70,6 +70,19 @@ describe('fetchLocationSuggestions', () => {
     })
 
     await expect(fetchLocationSuggestions('London')).rejects.toThrow('invoke failed')
+  })
+
+  it('supports profile-mode location lookups', async () => {
+    invokeMock.mockResolvedValue({
+      data: { suggestions: [] },
+      error: null,
+    })
+
+    await fetchLocationSuggestions('London', 'profile')
+
+    expect(invokeMock).toHaveBeenCalledWith('location', {
+      body: { query: 'London', mode: 'profile' },
+    })
   })
 
   it('throws when response shape is invalid', async () => {

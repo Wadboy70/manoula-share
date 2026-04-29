@@ -262,7 +262,7 @@ describe('SearchPage', () => {
 
     await waitFor(
       () => {
-        expect(fetchLocationSuggestionsMock).toHaveBeenCalledWith('Los')
+        expect(fetchLocationSuggestionsMock).toHaveBeenCalledWith('Los', 'search')
       },
       { timeout: 2000 },
     )

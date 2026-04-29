@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -10,6 +10,9 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { useAuth } from '@/features/auth'
+
+import { ProfileIncompletePrompt } from './profile-incomplete-prompt'
 
 const PLACEHOLDER_BOOKINGS = [
   { id: '1', label: 'Postnatal check-in', when: 'Tomorrow · 10:00' },
@@ -23,6 +26,9 @@ const PLACEHOLDER_REQUESTS = [
 ]
 
 export function DashboardOverviewPage() {
+  const { appUser } = useAuth()
+  const profileIsComplete = appUser?.professionalSearchProfile?.is_profile_complete ?? false
+
   return (
     <div className="flex flex-col gap-8">
       <header>
@@ -32,6 +38,21 @@ export function DashboardOverviewPage() {
           in a later iteration.
         </p>
       </header>
+
+      <ProfileIncompletePrompt
+        variant="banner"
+        percentage={profileIsComplete ? 100 : 60}
+        isComplete={profileIsComplete}
+        missingItems={
+          profileIsComplete
+            ? []
+            : [
+                'Finish your profile details',
+                'Add credentials for trust',
+                'Set visibility to public when ready',
+              ]
+        }
+      />
 
       <section aria-labelledby="dashboard-stats-heading">
         <h2 id="dashboard-stats-heading" className="sr-only">
@@ -153,15 +174,24 @@ export function DashboardOverviewPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Button asChild variant="outline" className="rounded-none sm:min-w-[10rem]">
-                <Link to="/dashboard/profile">Profile</Link>
-              </Button>
-              <Button asChild variant="outline" className="rounded-none sm:min-w-[10rem]">
-                <Link to="/dashboard/services">Services</Link>
-              </Button>
-              <Button asChild variant="outline" className="rounded-none sm:min-w-[10rem]">
-                <Link to="/dashboard/settings">Settings</Link>
-              </Button>
+              <Link
+                to="/dashboard/profile"
+                className={buttonVariants({ variant: 'outline', className: 'rounded-none sm:min-w-[10rem]' })}
+              >
+                Profile
+              </Link>
+              <Link
+                to="/dashboard/services"
+                className={buttonVariants({ variant: 'outline', className: 'rounded-none sm:min-w-[10rem]' })}
+              >
+                Services
+              </Link>
+              <Link
+                to="/dashboard/settings"
+                className={buttonVariants({ variant: 'outline', className: 'rounded-none sm:min-w-[10rem]' })}
+              >
+                Settings
+              </Link>
             </div>
           </CardContent>
           <CardFooter className="text-muted-foreground text-xs">

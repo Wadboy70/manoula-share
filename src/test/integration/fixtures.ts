@@ -6,6 +6,8 @@ import type { SearchCard } from '@/features/search/search.types'
 export type UsersRow = Database['public']['Tables']['users']['Row']
 export type ProfessionalSearchProfileRow =
   Database['public']['Tables']['professional_search_profiles']['Row']
+export type ProfessionalCredentialRow =
+  Database['public']['Tables']['professional_credentials']['Row']
 
 const ISO = '2026-01-01T00:00:00.000Z'
 
@@ -72,6 +74,24 @@ export function makeProfessionalProfileRow(
     geocoded_at: null,
     rating_avg: null,
     rating_count: 0,
+    ...overrides,
+  }
+}
+
+export function makeProfessionalCredentialRow(
+  overrides: Partial<ProfessionalCredentialRow> = {},
+): ProfessionalCredentialRow {
+  return {
+    id: 11,
+    professional_id: 1,
+    credential_type: 'IBCLC',
+    credential_label: 'IBCLC',
+    issuing_body: 'IBLCE',
+    registration_number: null,
+    verification_status: 'unverified',
+    expires_at: null,
+    verified_at: null,
+    created_at: ISO,
     ...overrides,
   }
 }

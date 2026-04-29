@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabaseClient'
 import type { LocationSuggestion, LocationSuggestionsPayload } from '@/features/search/location.types'
 
+export type LocationLookupMode = 'search' | 'profile'
+
 function parseAncestorMapboxIds(raw: unknown): string[] {
   if (!Array.isArray(raw)) return []
   const out: string[] = []
@@ -50,9 +52,12 @@ function parseLocationSuggestionsPayload(data: unknown): LocationSuggestion[] {
   return parsed as LocationSuggestion[]
 }
 
-export async function fetchLocationSuggestions(query: string): Promise<LocationSuggestion[]> {
+export async function fetchLocationSuggestions(
+  query: string,
+  mode: LocationLookupMode = 'search',
+): Promise<LocationSuggestion[]> {
   const { data, error } = await supabase.functions.invoke<LocationSuggestionsPayload>('location', {
-    body: { query },
+    body: { query, mode },
   })
 
   if (error) {

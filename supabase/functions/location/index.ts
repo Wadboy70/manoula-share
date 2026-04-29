@@ -17,6 +17,8 @@ type LocationSuggestion = {
   ancestorMapboxIds: string[]
 }
 
+type LocationLookupMode = 'search' | 'profile'
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -125,6 +127,8 @@ Deno.serve(async (req) => {
 
   const rawQuery = typeof (body as { query?: unknown }).query === 'string' ? (body as { query: string }).query : ''
   const query = rawQuery.trim()
+  const rawMode = (body as { mode?: unknown }).mode
+  const mode: LocationLookupMode = rawMode === 'profile' ? 'profile' : 'search'
 
   if (query.length === 0 || query.length < 3) {
     return jsonResponse({ suggestions: [] })
@@ -148,6 +152,9 @@ Deno.serve(async (req) => {
     limit: '5',
     access_token: mapboxToken,
   })
+  if (mode === 'profile') {
+    params.set('permanent', 'true')
+  }
 
   const mapboxUrl = `https://api.mapbox.com/search/geocode/v6/forward?${params.toString()}`
 

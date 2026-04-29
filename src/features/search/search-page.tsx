@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
 import { useAuth } from '@/features/auth'
-import { fetchLocationSuggestions } from '@/features/search/location.service'
-import type { LocationSuggestion } from '@/features/search/location.types'
+import { LocationPicker } from '@/features/search/location-picker'
 import { fetchSearchSpecialtyOptions } from '@/features/search/specialties.service'
 import type { SearchLocationFilter } from '@/features/search/search.types'
 import {
@@ -21,11 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-
-const LOCATION_DEBOUNCE_MS = 300
-const LOCATION_MIN_QUERY_LENGTH = 3
 
 export function SearchPage() {
   const { session } = useAuth()
@@ -45,12 +40,6 @@ export function SearchPage() {
   const [specialtiesError, setSpecialtiesError] = useState<string | null>(null)
 
   const [locationInput, setLocationInput] = useState('')
-  const [debouncedLocationQuery, setDebouncedLocationQuery] = useState('')
-  const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([])
-  const [locationLoading, setLocationLoading] = useState(false)
-  const [locationError, setLocationError] = useState<string | null>(null)
-  const [locationSuggestSuppressed, setLocationSuggestSuppressed] = useState(false)
-  const locationRequestIdRef = useRef(0)
 
   useEffect(() => {
     let cancelled = false
@@ -77,54 +66,6 @@ export function SearchPage() {
       cancelled = true
     }
   }, [])
-
-  useEffect(() => {
-    const handle = window.setTimeout(() => {
-      setDebouncedLocationQuery(locationInput.trim())
-    }, LOCATION_DEBOUNCE_MS)
-    return () => {
-      window.clearTimeout(handle)
-    }
-  }, [locationInput])
-
-  useEffect(() => {
-    const trimmed = debouncedLocationQuery
-    if (trimmed.length < LOCATION_MIN_QUERY_LENGTH) {
-      setLocationSuggestions([])
-      setLocationError(null)
-      setLocationLoading(false)
-      return
-    }
-
-    if (locationSuggestSuppressed) {
-      setLocationSuggestions([])
-      setLocationError(null)
-      setLocationLoading(false)
-      return
-    }
-
-    const requestId = ++locationRequestIdRef.current
-    setLocationLoading(true)
-    setLocationError(null)
-
-    void (async () => {
-      try {
-        const next = await fetchLocationSuggestions(trimmed)
-        if (locationRequestIdRef.current === requestId) {
-          setLocationSuggestions(next)
-        }
-      } catch {
-        if (locationRequestIdRef.current === requestId) {
-          setLocationSuggestions([])
-          setLocationError('Could not load location suggestions.')
-        }
-      } finally {
-        if (locationRequestIdRef.current === requestId) {
-          setLocationLoading(false)
-        }
-      }
-    })()
-  }, [debouncedLocationQuery, locationSuggestSuppressed])
 
   return (
     <div className="bg-background flex min-h-0 flex-1 flex-col">
@@ -199,75 +140,30 @@ export function SearchPage() {
                     ) : null}
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label
-                      htmlFor="search-filter-location"
-                      className="text-sm leading-snug font-medium text-white"
-                    >
-                      Location
-                    </label>
-                    <div className="relative overflow-visible">
-                      <Input
-                        id="search-filter-location"
-                        type="text"
-                        autoComplete="off"
-                        placeholder="City or region (min. 3 characters)"
-                        value={locationInput}
-                        onChange={(e) => {
-                          setLocationSuggestSuppressed(false)
-                          const value = e.target.value
-                          setLocationInput(value)
-                          if (
-                            appliedSearchLocation !== null &&
-                            value.trim() !== (appliedSearchLocation.label ?? '').trim()
-                          ) {
-                            setAppliedSearchLocation(null)
-                          }
-                        }}
-                        aria-autocomplete="list"
-                        aria-expanded={locationSuggestions.length > 0}
-                        aria-controls="search-location-suggestions"
-                      />
-                      {locationSuggestions.length > 0 ? (
-                        <ul
-                          id="search-location-suggestions"
-                          role="listbox"
-                          className="border-input absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-lg border bg-[#1a1a1a] py-1 shadow-lg"
-                        >
-                          {locationSuggestions.map((suggestion) => (
-                            <li key={suggestion.id} role="presentation">
-                              <button
-                                type="button"
-                                role="option"
-                                className="hover:bg-input/50 w-full px-3 py-2 text-left text-sm text-white"
-                                onClick={() => {
-                                  setLocationInput(suggestion.label)
-                                  setAppliedSearchLocation({
-                                    mapboxId: suggestion.mapboxId,
-                                    latitude: suggestion.latitude,
-                                    longitude: suggestion.longitude,
-                                    ancestorMapboxIds: suggestion.ancestorMapboxIds,
-                                    label: suggestion.label,
-                                  })
-                                  setLocationSuggestions([])
-                                  setLocationSuggestSuppressed(true)
-                                  queueMicrotask(() => {
-                                    document.getElementById('search-filter-location')?.blur()
-                                  })
-                                }}
-                              >
-                                {suggestion.label}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </div>
-                    {locationLoading ? (
-                      <p className="text-muted-foreground text-xs">Searching locations…</p>
-                    ) : null}
-                    {locationError ? (
-                      <p className="text-destructive text-xs leading-relaxed">{locationError}</p>
-                    ) : null}
+                    <LocationPicker
+                      id="search-filter-location"
+                      label="Location"
+                      mode="search"
+                      value={locationInput}
+                      onValueChange={(value) => {
+                        setLocationInput(value)
+                        if (
+                          appliedSearchLocation !== null &&
+                          value.trim() !== (appliedSearchLocation.label ?? '').trim()
+                        ) {
+                          setAppliedSearchLocation(null)
+                        }
+                      }}
+                      onSuggestionSelected={(suggestion) => {
+                        setAppliedSearchLocation({
+                          mapboxId: suggestion.mapboxId,
+                          latitude: suggestion.latitude,
+                          longitude: suggestion.longitude,
+                          ancestorMapboxIds: suggestion.ancestorMapboxIds,
+                          label: suggestion.label,
+                        })
+                      }}
+                    />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label
