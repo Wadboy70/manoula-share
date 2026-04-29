@@ -8,9 +8,14 @@ import { renderWithApp } from '@/__tests__/integration/render-app'
 import { ForgotPasswordPage } from '@/pages/forgot-password-page'
 import { ResetPasswordPage } from '@/pages/reset-password-page'
 import { SignUpPage } from '@/pages/sign-up-page'
-import type { ProfessionalSearchProfileRow, UsersRow } from '@/test/integration/fixtures'
+import type {
+  ProfessionalCredentialRow,
+  ProfessionalSearchProfileRow,
+  UsersRow,
+} from '@/test/integration/fixtures'
 import {
   makeAuthUser,
+  makeProfessionalCredentialRow,
   makeProfessionalProfileRow,
   makeSearchInvokeCard,
   makeSession,
@@ -21,12 +26,16 @@ type IntegrationStore = {
   session: Session | null
   usersRow: UsersRow | null
   profileRow: ProfessionalSearchProfileRow | null
+  credentialRows: ProfessionalCredentialRow[]
+  specialtyRows: { specialty_id: number }[]
+  specialties: { id: number; label: string }[]
 }
 
 type IntegrationSupabaseClient = {
   store: IntegrationStore
   auth: {
     getSession: ReturnType<typeof vi.fn>
+    getUser: ReturnType<typeof vi.fn>
     signInWithPassword: ReturnType<typeof vi.fn>
     signUp: ReturnType<typeof vi.fn>
     signOut: ReturnType<typeof vi.fn>
@@ -36,6 +45,7 @@ type IntegrationSupabaseClient = {
   }
   from: ReturnType<typeof vi.fn>
   functions: { invoke: ReturnType<typeof vi.fn> }
+  storage: { from: ReturnType<typeof vi.fn> }
   emitAuthStateChange: (event: string, nextSession: Session | null) => void
   resetHandlers: () => void
 }
@@ -48,6 +58,13 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
     session: null,
     usersRow: null,
     profileRow: null,
+    credentialRows: [],
+    specialtyRows: [],
+    specialties: [
+      { id: 1, label: 'Lactation Consultant' },
+      { id: 2, label: 'Doula' },
+      { id: 3, label: 'Therapist' },
+    ],
   }
 
   const emitAuthStateChange = (event: string, nextSession: Session | null) => {
@@ -62,6 +79,10 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
         data: { session: store.session },
         error: null,
       })),
+      getUser: vi.fn(async () => ({
+        data: { user: store.session?.user ?? null },
+        error: null,
+      })),
       signInWithPassword: vi.fn(),
       signUp: vi.fn(),
       signOut: vi.fn(async () => ({ error: null })),
@@ -74,6 +95,7 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
     },
     from: vi.fn(),
     functions: { invoke: vi.fn() },
+    storage: { from: vi.fn() },
     emitAuthStateChange,
     resetHandlers() {
       authListener = null
@@ -81,19 +103,109 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
   }
 
   client.from.mockImplementation((table: string) => {
-    if (table === 'users') {
-      return {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn(async () => ({ data: store.usersRow, error: null })),
-        insert: vi.fn(async () => ({ error: null })),
-      }
-    }
     if (table === 'professional_search_profiles') {
       return {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         maybeSingle: vi.fn(async () => ({ data: store.profileRow, error: null })),
+        single: vi.fn(async () => ({ data: store.profileRow, error: null })),
+        update: vi.fn((patch: Partial<ProfessionalSearchProfileRow>) => ({
+          eq: vi.fn(async () => {
+            store.profileRow = { ...(store.profileRow as ProfessionalSearchProfileRow), ...patch }
+            return { error: null }
+          }),
+        })),
+      }
+    }
+    if (table === 'professional_specialties') {
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn(async () => ({ data: store.specialtyRows, error: null })),
+        delete: vi.fn(() => ({
+          eq: vi.fn(async () => {
+            store.specialtyRows = []
+            return { error: null }
+          }),
+        })),
+        insert: vi.fn(async (rows: { professional_id: number; specialty_id: number }[]) => {
+          store.specialtyRows = rows.map((row) => ({ specialty_id: row.specialty_id }))
+          return { error: null }
+        }),
+      }
+    }
+    if (table === 'specialties') {
+      return {
+        select: vi.fn().mockReturnThis(),
+        order: vi.fn(async () => ({ data: store.specialties, error: null })),
+      }
+    }
+    if (table === 'professional_credentials') {
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn(async () => ({ data: store.credentialRows, error: null })),
+        in: vi.fn(async (_: string, ids: number[]) => {
+          store.credentialRows = store.credentialRows.filter((row) => !ids.includes(row.id))
+          return { error: null }
+        }),
+        delete: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            in: vi.fn(async (_: string, ids: number[]) => {
+              store.credentialRows = store.credentialRows.filter((row) => !ids.includes(row.id))
+              return { error: null }
+            }),
+          })),
+        })),
+        update: vi.fn((patch: Partial<ProfessionalCredentialRow>) => ({
+          eq: vi.fn((_: string, id: number) => ({
+            eq: vi.fn(async () => {
+              store.credentialRows = store.credentialRows.map((row) =>
+                row.id === id ? { ...row, ...patch } : row,
+              )
+              return { error: null }
+            }),
+          })),
+        })),
+        insert: vi.fn(async (row: Partial<ProfessionalCredentialRow>) => {
+          const nextId = Math.max(0, ...store.credentialRows.map((item) => item.id)) + 1
+          store.credentialRows = [
+            ...store.credentialRows,
+            makeProfessionalCredentialRow({
+              id: nextId,
+              credential_type: row.credential_type ?? 'IBCLC',
+              credential_label: row.credential_label ?? 'IBCLC',
+              issuing_body: row.issuing_body ?? 'IBLCE',
+              registration_number: row.registration_number ?? null,
+            }),
+          ]
+          return { error: null }
+        }),
+      }
+    }
+    if (table === 'users') {
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn(async () => ({ data: store.usersRow, error: null })),
+        single: vi.fn(async () => ({
+          data: store.usersRow
+            ? {
+                first_name: store.usersRow.first_name,
+                last_name: store.usersRow.last_name,
+                bio: store.usersRow.bio,
+                profile_photo_url: store.usersRow.profile_photo_url,
+                country_code: store.usersRow.country_code,
+              }
+            : null,
+          error: null,
+        })),
+        update: vi.fn((patch: Partial<UsersRow>) => ({
+          eq: vi.fn(async () => {
+            store.usersRow = { ...(store.usersRow as UsersRow), ...patch }
+            return { error: null }
+          }),
+        })),
+        insert: vi.fn(async () => ({ error: null })),
       }
     }
     throw new Error(`integration mock: unexpected table "${table}"`)
@@ -116,6 +228,12 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
   client.functions.invoke.mockResolvedValue({
     data: { cards: [], nextCursor: null, truncated: false },
     error: null,
+  })
+  client.storage.from.mockReturnValue({
+    upload: vi.fn(async () => ({ error: null })),
+    getPublicUrl: vi.fn(() => ({
+      data: { publicUrl: 'https://example.com/profile-photo.jpg' },
+    })),
   })
 
   return client
@@ -165,6 +283,8 @@ describe('integration: routing and search', () => {
     mockSb.store.session = null
     mockSb.store.usersRow = null
     mockSb.store.profileRow = null
+    mockSb.store.credentialRows = []
+    mockSb.store.specialtyRows = []
     mockSb.resetHandlers()
     mockSb.functions.invoke.mockResolvedValue({
       data: { cards: [], nextCursor: null, truncated: false },
@@ -277,6 +397,62 @@ describe('integration: routing and search', () => {
     })
   })
 
+  it('shows completion prompt on dashboard when professional profile is incomplete', async () => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ is_professional: true })
+    mockSb.store.profileRow = makeProfessionalProfileRow({
+      user_id: 1,
+      is_profile_complete: false,
+    })
+
+    renderWithApp(['/dashboard'])
+
+    await waitFor(() => {
+      expect(screen.getByText(/complete your profile/i)).toBeInTheDocument()
+    })
+    expect(screen.getByRole('link', { name: /finish profile/i })).toHaveAttribute(
+      'href',
+      '/dashboard/profile',
+    )
+  })
+
+  it('saves professional profile edits and keeps script tags inert in preview text', async () => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ is_professional: true })
+    mockSb.store.profileRow = makeProfessionalProfileRow({
+      user_id: 1,
+      is_profile_complete: false,
+      location_label: '',
+      is_public_searchable: false,
+    })
+    mockSb.store.credentialRows = [makeProfessionalCredentialRow()]
+    mockSb.store.specialtyRows = [{ specialty_id: 1 }]
+
+    renderWithApp(['/dashboard/profile'])
+    const u = userEvent.setup()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /edit profile/i })).toBeInTheDocument()
+    })
+
+    await u.clear(screen.getByLabelText(/first name/i))
+    await u.type(screen.getByLabelText(/first name/i), 'Jane')
+    await u.clear(screen.getByLabelText(/last name/i))
+    await u.type(screen.getByLabelText(/last name/i), 'Doula')
+    await u.clear(screen.getByLabelText(/bio \/ about/i))
+    await u.type(screen.getByLabelText(/bio \/ about/i), '<script>alert(1)</script>Supportive care')
+    await u.clear(screen.getByLabelText(/location/i))
+    await u.type(screen.getByLabelText(/location/i), 'London')
+    await u.click(screen.getByRole('button', { name: /save profile/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent(/profile saved successfully/i)
+    })
+    expect(screen.queryByText(/<script>/i)).not.toBeInTheDocument()
+  })
+
   it('shows the brand header on sign-in and lists auth actions in the desktop menu sheet', async () => {
     mockSb.store.session = null
     renderWithApp(['/signin'])
@@ -293,6 +469,51 @@ describe('integration: routing and search', () => {
     const inPanel = within(panel)
     expect(inPanel.getByRole('link', { name: /^log in$/i })).toHaveAttribute('href', '/signin')
     expect(inPanel.getByRole('link', { name: /^sign up$/i })).toHaveAttribute('href', '/signup')
+  })
+
+  it('shows Dashboard in the account sheet when signed in as a professional', async () => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ is_professional: true })
+    mockSb.store.profileRow = makeProfessionalProfileRow({ user_id: 1 })
+
+    renderWithApp(['/search'])
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^find support$/i })).toBeInTheDocument()
+    })
+
+    const u = userEvent.setup()
+    await u.click(screen.getByRole('button', { name: /open menu/i }))
+
+    await waitFor(() => {
+      const panel = screen.getByRole('dialog')
+      expect(within(panel).getByRole('link', { name: /^dashboard$/i })).toHaveAttribute(
+        'href',
+        '/dashboard',
+      )
+    })
+  })
+
+  it('shows Join as a professional in the account sheet when signed in as a client', async () => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ is_professional: false })
+    mockSb.store.profileRow = null
+
+    renderWithApp(['/search'])
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^find support$/i })).toBeInTheDocument()
+    })
+
+    const u = userEvent.setup()
+    await u.click(screen.getByRole('button', { name: /open menu/i }))
+
+    await waitFor(() => {
+      const panel = screen.getByRole('dialog')
+      expect(
+        within(panel).getByRole('link', { name: /join as a professional/i }),
+      ).toHaveAttribute('href', '/signup/professional')
+    })
   })
 })
 

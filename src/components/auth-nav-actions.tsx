@@ -4,11 +4,16 @@ import { Link } from 'react-router-dom'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
+import type { AppUser } from '@/types/auth'
 
 export type AuthNavVariant = 'sheet' | 'mobile'
 
 export type AuthNavActionsProps = {
   session: Session | null
+  /** Loaded app user row; used with `session` for Dashboard / Join CTA (no extra fetch). */
+  appUser: AppUser | null
+  /** When true, professional CTA is hidden until `appUser` is reliable. */
+  authLoading: boolean
   loggingOut: boolean
   onLogout: () => void | Promise<void>
   variant: AuthNavVariant
@@ -22,6 +27,8 @@ function afterNav(onAfterNavigate: AuthNavActionsProps['onAfterNavigate']) {
 
 export function AuthNavActions({
   session,
+  appUser,
+  authLoading,
   loggingOut,
   onLogout,
   variant,
@@ -47,6 +54,30 @@ export function AuthNavActions({
     isSheet ? 'w-full px-8' : 'min-h-11 w-full flex-1',
   )
 
+  const showProfessionalCta =
+    Boolean(session) && !authLoading && appUser !== null
+
+  const professionalCta =
+    showProfessionalCta && appUser ? (
+      appUser.is_professional ? (
+        <Link
+          to="/dashboard"
+          className={primaryLinkClass}
+          onClick={() => afterNav(onAfterNavigate)}
+        >
+          Dashboard
+        </Link>
+      ) : (
+        <Link
+          to="/signup/professional"
+          className={outlineLinkClass}
+          onClick={() => afterNav(onAfterNavigate)}
+        >
+          Join as a professional
+        </Link>
+      )
+    ) : null
+
   if (session) {
     const logoutButton = (
       <Button
@@ -64,10 +95,22 @@ export function AuthNavActions({
     )
 
     if (isSheet) {
-      return <div className="px-4 pb-6">{logoutButton}</div>
+      return (
+        <div className="flex flex-col gap-3 px-4 pb-6">
+          {professionalCta}
+          {logoutButton}
+        </div>
+      )
     }
 
-    return logoutButton
+    return (
+      <div className="flex w-full max-w-lg flex-col gap-2 sm:mx-auto">
+        {professionalCta ? (
+          <div className="flex min-h-11 w-full items-stretch">{professionalCta}</div>
+        ) : null}
+        <div className="flex min-h-11 w-full items-stretch">{logoutButton}</div>
+      </div>
+    )
   }
 
   if (isSheet) {
