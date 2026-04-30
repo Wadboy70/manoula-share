@@ -8,6 +8,10 @@ export type ProfessionalSearchProfileRow =
   Database['public']['Tables']['professional_search_profiles']['Row']
 export type ProfessionalCredentialRow =
   Database['public']['Tables']['professional_credentials']['Row']
+export type ServiceRow = Database['public']['Tables']['services']['Row']
+export type ServiceProviderLocationRow =
+  Database['public']['Tables']['service_provider_locations']['Row']
+export type ServiceAreaPlaceRow = Database['public']['Tables']['service_area_places']['Row']
 
 const ISO = '2026-01-01T00:00:00.000Z'
 
@@ -112,6 +116,62 @@ export function makeSearchInvokeCard(overrides: Partial<SearchCard> = {}): Searc
     offersProviderLocation: false,
     specialties: ['Lactation Consultant'],
     services: [],
+    ...overrides,
+  }
+}
+
+export function makeServiceRow(overrides: Partial<ServiceRow> = {}): ServiceRow {
+  return {
+    id: 10,
+    professional_id: 1,
+    specialty_id: null,
+    title: 'Home visit',
+    description: 'Postnatal support',
+    price_cents: 12000,
+    currency_code: 'GBP',
+    duration_minutes: 60,
+    delivery_mode: 'in_home',
+    remote_scope: null,
+    provider_location_name: null,
+    service_area_type: 'place_list',
+    service_radius_km: null,
+    service_area_text: null,
+    is_active: true,
+    created_at: ISO,
+    updated_at: ISO,
+    ...overrides,
+  }
+}
+
+export function makeServiceProviderLocationRow(
+  overrides: Partial<ServiceProviderLocationRow> = {},
+): ServiceProviderLocationRow {
+  return {
+    id: 21,
+    service_id: 10,
+    location_name: 'Clinic',
+    location_label: 'Manchester, UK',
+    mapbox_id: 'mbx.1',
+    latitude: 53.48,
+    longitude: -2.24,
+    geocoded_at: ISO,
+    country_code: 'GB',
+    created_at: ISO,
+    ...overrides,
+  }
+}
+
+export function makeServiceAreaPlaceRow(overrides: Partial<ServiceAreaPlaceRow> = {}): ServiceAreaPlaceRow {
+  return {
+    id: 31,
+    service_id: 10,
+    location_label: 'London, UK',
+    mapbox_id: 'mbx.2',
+    latitude: 51.5,
+    longitude: -0.12,
+    geocoded_at: ISO,
+    country_code: 'GB',
+    created_at: ISO,
     ...overrides,
   }
 }

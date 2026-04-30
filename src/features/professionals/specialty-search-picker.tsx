@@ -140,6 +140,15 @@ export function SpecialtySearchPicker({
               setOpen(true)
             }}
             onFocus={() => setOpen(true)}
+            onBlur={() => {
+              queueMicrotask(() => {
+                const root = rootRef.current
+                const active = document.activeElement
+                if (!root || !active || !root.contains(active)) {
+                  setOpen(false)
+                }
+              })
+            }}
             className="rounded-lg"
           />
           {open && !disabled ? (

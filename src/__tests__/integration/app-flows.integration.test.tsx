@@ -10,6 +10,9 @@ import { ResetPasswordPage } from '@/pages/reset-password-page'
 import { SignUpPage } from '@/pages/sign-up-page'
 import type {
   ProfessionalCredentialRow,
+  ServiceAreaPlaceRow,
+  ServiceProviderLocationRow,
+  ServiceRow,
   ProfessionalSearchProfileRow,
   UsersRow,
 } from '@/test/integration/fixtures'
@@ -17,6 +20,9 @@ import {
   makeAuthUser,
   makeProfessionalCredentialRow,
   makeProfessionalProfileRow,
+  makeServiceAreaPlaceRow,
+  makeServiceProviderLocationRow,
+  makeServiceRow,
   makeSearchInvokeCard,
   makeSession,
   makeUsersRow,
@@ -27,6 +33,9 @@ type IntegrationStore = {
   usersRow: UsersRow | null
   profileRow: ProfessionalSearchProfileRow | null
   credentialRows: ProfessionalCredentialRow[]
+  serviceRows: ServiceRow[]
+  serviceProviderLocationRows: ServiceProviderLocationRow[]
+  serviceAreaPlaceRows: ServiceAreaPlaceRow[]
   specialtyRows: { specialty_id: number }[]
   specialties: { id: number; label: string }[]
 }
@@ -59,6 +68,9 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
     usersRow: null,
     profileRow: null,
     credentialRows: [],
+    serviceRows: [],
+    serviceProviderLocationRows: [],
+    serviceAreaPlaceRows: [],
     specialtyRows: [],
     specialties: [
       { id: 1, label: 'Lactation Consultant' },
@@ -135,8 +147,15 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
     }
     if (table === 'specialties') {
       return {
-        select: vi.fn().mockReturnThis(),
-        order: vi.fn(async () => ({ data: store.specialties, error: null })),
+        select: vi.fn(() => ({
+          in: vi.fn((_: string, ids: number[]) => ({
+            order: vi.fn(async () => ({
+              data: store.specialties.filter((row) => ids.includes(row.id)),
+              error: null,
+            })),
+          })),
+          order: vi.fn(async () => ({ data: store.specialties, error: null })),
+        })),
       }
     }
     if (table === 'professional_credentials') {
@@ -206,6 +225,132 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
           }),
         })),
         insert: vi.fn(async () => ({ error: null })),
+      }
+    }
+    if (table === 'services') {
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn(async () => ({ data: store.serviceRows, error: null })),
+        update: vi.fn((patch: Partial<ServiceRow>) => ({
+          eq: vi.fn((_: string, id: number) => ({
+            eq: vi.fn(async () => {
+              store.serviceRows = store.serviceRows.map((row) => (row.id === id ? { ...row, ...patch } : row))
+              return { error: null }
+            }),
+          })),
+        })),
+        insert: vi.fn((row: Partial<ServiceRow>) => ({
+          select: vi.fn(() => ({
+            single: vi.fn(async () => {
+              const nextId = Math.max(0, ...store.serviceRows.map((item) => item.id)) + 1
+              store.serviceRows = [
+                makeServiceRow({
+                  id: nextId,
+                  title: row.title ?? 'New service',
+                  description: row.description ?? null,
+                  delivery_mode: row.delivery_mode ?? 'remote',
+                  professional_id: row.professional_id ?? 1,
+                  price_cents: row.price_cents ?? null,
+                  currency_code: row.currency_code ?? 'GBP',
+                  duration_minutes: row.duration_minutes ?? null,
+                  specialty_id: row.specialty_id ?? null,
+                  remote_scope: row.remote_scope ?? null,
+                  provider_location_name: row.provider_location_name ?? null,
+                  service_area_type: row.service_area_type ?? null,
+                  service_radius_km: row.service_radius_km ?? null,
+                  service_area_text: row.service_area_text ?? null,
+                  is_active: row.is_active ?? true,
+                }),
+                ...store.serviceRows,
+              ]
+              return { data: { id: nextId }, error: null }
+            }),
+          })),
+        })),
+        delete: vi.fn(() => ({
+          eq: vi.fn((_: string, id: number) => ({
+            eq: vi.fn(async () => {
+              store.serviceRows = store.serviceRows.filter((row) => row.id !== id)
+              store.serviceProviderLocationRows = store.serviceProviderLocationRows.filter(
+                (row) => row.service_id !== id,
+              )
+              store.serviceAreaPlaceRows = store.serviceAreaPlaceRows.filter((row) => row.service_id !== id)
+              return { error: null }
+            }),
+          })),
+        })),
+      }
+    }
+    if (table === 'service_provider_locations') {
+      return {
+        select: vi.fn(() => ({
+          in: vi.fn((_: string, ids: number[]) => ({
+            order: vi.fn(async () => ({
+              data: store.serviceProviderLocationRows.filter((row) => ids.includes(row.service_id)),
+              error: null,
+            })),
+          })),
+        })),
+        delete: vi.fn(() => ({
+          eq: vi.fn(async (_: string, serviceId: number) => {
+            store.serviceProviderLocationRows = store.serviceProviderLocationRows.filter(
+              (row) => row.service_id !== serviceId,
+            )
+            return { error: null }
+          }),
+        })),
+        insert: vi.fn(async (rows: Partial<ServiceProviderLocationRow>[]) => {
+          const nextRows = rows.map((row, idx) =>
+            makeServiceProviderLocationRow({
+              id: Math.max(0, ...store.serviceProviderLocationRows.map((item) => item.id)) + idx + 1,
+              service_id: row.service_id ?? 1,
+              location_name: row.location_name ?? null,
+              location_label: row.location_label ?? null,
+              mapbox_id: row.mapbox_id ?? null,
+              latitude: row.latitude ?? null,
+              longitude: row.longitude ?? null,
+              geocoded_at: row.geocoded_at ?? null,
+              country_code: row.country_code ?? 'GB',
+            }),
+          )
+          store.serviceProviderLocationRows = [...store.serviceProviderLocationRows, ...nextRows]
+          return { error: null }
+        }),
+      }
+    }
+    if (table === 'service_area_places') {
+      return {
+        select: vi.fn(() => ({
+          in: vi.fn((_: string, ids: number[]) => ({
+            order: vi.fn(async () => ({
+              data: store.serviceAreaPlaceRows.filter((row) => ids.includes(row.service_id)),
+              error: null,
+            })),
+          })),
+        })),
+        delete: vi.fn(() => ({
+          eq: vi.fn(async (_: string, serviceId: number) => {
+            store.serviceAreaPlaceRows = store.serviceAreaPlaceRows.filter((row) => row.service_id !== serviceId)
+            return { error: null }
+          }),
+        })),
+        insert: vi.fn(async (rows: Partial<ServiceAreaPlaceRow>[]) => {
+          const nextRows = rows.map((row, idx) =>
+            makeServiceAreaPlaceRow({
+              id: Math.max(0, ...store.serviceAreaPlaceRows.map((item) => item.id)) + idx + 1,
+              service_id: row.service_id ?? 1,
+              location_label: row.location_label ?? null,
+              mapbox_id: row.mapbox_id ?? null,
+              latitude: row.latitude ?? null,
+              longitude: row.longitude ?? null,
+              geocoded_at: row.geocoded_at ?? null,
+              country_code: row.country_code ?? 'GB',
+            }),
+          )
+          store.serviceAreaPlaceRows = [...store.serviceAreaPlaceRows, ...nextRows]
+          return { error: null }
+        }),
       }
     }
     throw new Error(`integration mock: unexpected table "${table}"`)
@@ -284,6 +429,9 @@ describe('integration: routing and search', () => {
     mockSb.store.usersRow = null
     mockSb.store.profileRow = null
     mockSb.store.credentialRows = []
+    mockSb.store.serviceRows = []
+    mockSb.store.serviceProviderLocationRows = []
+    mockSb.store.serviceAreaPlaceRows = []
     mockSb.store.specialtyRows = []
     mockSb.resetHandlers()
     mockSb.functions.invoke.mockResolvedValue({
@@ -451,6 +599,64 @@ describe('integration: routing and search', () => {
       expect(screen.getByRole('status')).toHaveTextContent(/profile saved successfully/i)
     })
     expect(screen.queryByText(/<script>/i)).not.toBeInTheDocument()
+  })
+
+  it('allows professionals to create update and delete services', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ is_professional: true })
+    mockSb.store.profileRow = makeProfessionalProfileRow({ user_id: 1 })
+
+    renderWithApp(['/dashboard/services'])
+    const u = userEvent.setup()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^services$/i })).toBeInTheDocument()
+    })
+
+    await u.click(screen.getByRole('button', { name: /^create service$/i }))
+    expect(screen.getByLabelText(/^price \(gbp\)$/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/^currency$/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/delivery mode determines which location fields/i)).toBeInTheDocument()
+
+    await u.type(screen.getByLabelText(/^title$/i), 'Virtual support call')
+    await u.type(screen.getByLabelText(/^price \(gbp\)$/i), '75.50')
+    await u.selectOptions(screen.getByLabelText(/^delivery mode$/i), 'remote')
+    await u.click(screen.getAllByRole('button', { name: /^create service$/i })[1]!)
+
+    await waitFor(() => {
+      expect(mockSb.store.serviceRows.some((row) => row.title === 'Virtual support call')).toBe(true)
+    })
+    expect(mockSb.store.serviceRows.some((row) => row.title === 'Virtual support call' && row.price_cents === 7550)).toBe(true)
+
+    const created = mockSb.store.serviceRows.find((row) => row.title === 'Virtual support call')
+    expect(created).toBeTruthy()
+    await u.click(screen.getByRole('button', { name: /virtual support call/i }))
+    expect(screen.getByRole('button', { name: /^save changes$/i })).toBeInTheDocument()
+
+    await u.selectOptions(screen.getByLabelText(/^delivery mode$/i), 'in_home')
+    await waitFor(() => {
+      expect(screen.queryByRole('option', { name: /custom text/i })).not.toBeInTheDocument()
+    })
+    expect(screen.queryByLabelText(/^radius \(km\)$/i)).not.toBeInTheDocument()
+    await u.selectOptions(screen.getByLabelText(/^service area type$/i), 'radius')
+    expect(screen.getByLabelText(/^radius \(km\)$/i)).toBeInTheDocument()
+
+    await u.clear(screen.getByLabelText(/^title$/i))
+    await u.type(screen.getByLabelText(/^title$/i), 'Virtual support call updated')
+    await u.click(screen.getByRole('button', { name: /^save changes$/i }))
+
+    await waitFor(() => {
+      expect(mockSb.store.serviceRows.some((row) => row.title === 'Virtual support call updated')).toBe(true)
+    })
+
+    await u.click(screen.getByRole('button', { name: /virtual support call updated/i }))
+    await u.click(screen.getByRole('button', { name: /^delete$/i }))
+    await waitFor(() => {
+      expect(mockSb.store.serviceRows.some((row) => row.title === 'Virtual support call updated')).toBe(false)
+    })
+    confirmSpy.mockRestore()
   })
 
   it('shows the brand header on sign-in and lists auth actions in the desktop menu sheet', async () => {

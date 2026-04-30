@@ -25,6 +25,7 @@ describe('fetchLocationSuggestions', () => {
             mapboxId: 'mapbox-1',
             latitude: 34.05,
             longitude: -118.25,
+            countryCode: 'US',
             ancestorMapboxIds: ['ca', 'us'],
           },
           {
@@ -33,6 +34,7 @@ describe('fetchLocationSuggestions', () => {
             mapboxId: 'mapbox-2',
             latitude: 37.38,
             longitude: -122.11,
+            countryCode: 'US',
             ancestorMapboxIds: ['ca'],
           },
         ],
@@ -50,6 +52,7 @@ describe('fetchLocationSuggestions', () => {
         mapboxId: 'mapbox-1',
         latitude: 34.05,
         longitude: -118.25,
+        countryCode: 'US',
         ancestorMapboxIds: ['ca', 'us'],
       },
       {
@@ -58,6 +61,7 @@ describe('fetchLocationSuggestions', () => {
         mapboxId: 'mapbox-2',
         latitude: 37.38,
         longitude: -122.11,
+        countryCode: 'US',
         ancestorMapboxIds: ['ca'],
       },
     ])

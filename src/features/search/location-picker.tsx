@@ -13,6 +13,7 @@ type LocationPickerProps = {
   value: string
   mode?: LocationLookupMode
   placeholder?: string
+  maxLength?: number
   onValueChange: (value: string) => void
   onSuggestionSelected: (suggestion: LocationSuggestion) => void
 }
@@ -23,6 +24,7 @@ export function LocationPicker({
   value,
   mode = 'search',
   placeholder = 'City or region (min. 3 characters)',
+  maxLength,
   onValueChange,
   onSuggestionSelected,
 }: LocationPickerProps) {
@@ -84,6 +86,7 @@ export function LocationPicker({
           autoComplete="off"
           value={value}
           placeholder={placeholder}
+          maxLength={maxLength}
           onChange={(event) => {
             setHasUserEdited(true)
             setSuppressed(false)

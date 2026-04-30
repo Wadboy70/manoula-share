@@ -14,6 +14,7 @@ type LocationSuggestion = {
   mapboxId: string
   latitude: number
   longitude: number
+  countryCode: string
   ancestorMapboxIds: string[]
 }
 
@@ -36,6 +37,18 @@ function extractAncestorMapboxIds(context: unknown): string[] {
     if (typeof mid === 'string' && mid.length > 0) seen.add(mid)
   }
   return [...seen]
+}
+
+function extractCountryCode(context: unknown): string | null {
+  if (typeof context !== 'object' || context === null) return null
+  for (const value of Object.values(context as Record<string, unknown>)) {
+    if (typeof value !== 'object' || value === null) continue
+    const countryCode = (value as { country_code?: unknown }).country_code
+    if (typeof countryCode === 'string' && countryCode.length >= 2) {
+      return countryCode.slice(0, 2).toUpperCase()
+    }
+  }
+  return null
 }
 
 function mapFeatureToSuggestion(feature: unknown, index: number): LocationSuggestion | null {
@@ -78,6 +91,8 @@ function mapFeatureToSuggestion(feature: unknown, index: number): LocationSugges
   }
 
   const ancestorMapboxIds = extractAncestorMapboxIds(props.context)
+  const countryCode = extractCountryCode(props.context)
+  if (!countryCode) return null
 
   return {
     id,
@@ -85,6 +100,7 @@ function mapFeatureToSuggestion(feature: unknown, index: number): LocationSugges
     mapboxId,
     latitude: lat,
     longitude: lon,
+    countryCode,
     ancestorMapboxIds,
   }
 }

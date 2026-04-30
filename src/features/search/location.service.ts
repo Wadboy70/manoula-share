@@ -24,12 +24,15 @@ function parseLocationSuggestion(entry: unknown): LocationSuggestion | null {
     return null
   }
   const ancestorMapboxIds = parseAncestorMapboxIds(row.ancestorMapboxIds)
+  const countryCode = typeof row.countryCode === 'string' ? row.countryCode.trim().toUpperCase() : ''
+  if (!countryCode || countryCode.length !== 2) return null
   return {
     id: row.id,
     label: row.label,
     mapboxId,
     latitude: lat,
     longitude: lng,
+    countryCode,
     ancestorMapboxIds,
   }
 }

@@ -41,6 +41,7 @@ type SearchLocationFilter = {
   mapboxId: string
   latitude: number
   longitude: number
+  countryCode: string
   ancestorMapboxIds: string[]
 }
 
@@ -98,6 +99,10 @@ function parseLocationFilter(body: unknown): ParseLocationResult {
   if (typeof lat !== 'number' || typeof lng !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lng)) {
     return { ok: false, message: 'location.latitude and location.longitude must be finite numbers' }
   }
+  const countryCodeRaw = typeof o.countryCode === 'string' ? o.countryCode.trim().toUpperCase() : ''
+  if (!countryCodeRaw || countryCodeRaw.length !== 2) {
+    return { ok: false, message: 'location.countryCode is required and must be an ISO-2 code' }
+  }
 
   let ancestorMapboxIds: string[] = []
   const anc = o.ancestorMapboxIds
@@ -119,6 +124,7 @@ function parseLocationFilter(body: unknown): ParseLocationResult {
       mapboxId,
       latitude: lat,
       longitude: lng,
+      countryCode: countryCodeRaw,
       ancestorMapboxIds,
     },
   }
@@ -318,6 +324,7 @@ Deno.serve(async (req) => {
           mapboxId: location.mapboxId,
           latitude: location.latitude,
           longitude: location.longitude,
+          countryCode: location.countryCode,
           ancestorMapboxIds: location.ancestorMapboxIds,
         }
 
