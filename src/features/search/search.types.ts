@@ -12,9 +12,6 @@ type SearchCardSelectRow = Pick<
   | 'mapbox_id'
   | 'latitude'
   | 'longitude'
-  | 'offers_remote'
-  | 'offers_in_home'
-  | 'offers_provider_location'
   | 'specialties'
   | 'services'
   | 'rating_avg'
@@ -29,6 +26,23 @@ export type SearchCardService = {
   priceCents: number | null
   currencyCode: string
   specialtyLabel: string | null
+}
+
+/** Delivery lozenge labels from active services on a card (stable order). */
+export function deliveryModalityLabelsFromServices(services: SearchCardService[]): string[] {
+  let remote = false
+  let inHome = false
+  let providerLocation = false
+  for (const s of services) {
+    if (s.deliveryMode === 'remote') remote = true
+    else if (s.deliveryMode === 'in_home') inHome = true
+    else if (s.deliveryMode === 'provider_location') providerLocation = true
+  }
+  const labels: string[] = []
+  if (remote) labels.push('Remote')
+  if (inHome) labels.push('In-home')
+  if (providerLocation) labels.push('At provider location')
+  return labels
 }
 
 function parseServicesFromViewJson(value: unknown): SearchCardService[] {
@@ -110,9 +124,6 @@ export type SearchCard = {
   mapboxId: string | null
   latitude: number | null
   longitude: number | null
-  offersRemote: boolean
-  offersInHome: boolean
-  offersProviderLocation: boolean
   /** Denormalized from profile when returned by search RPC (optional for older mocks). */
   ratingAvg?: number | null
   ratingCount?: number | null
@@ -133,9 +144,6 @@ export function toSearchCard(row: SearchCardSelectRow): SearchCard | null {
     mapboxId: row.mapbox_id,
     latitude: row.latitude,
     longitude: row.longitude,
-    offersRemote: row.offers_remote ?? false,
-    offersInHome: row.offers_in_home ?? false,
-    offersProviderLocation: row.offers_provider_location ?? false,
     ratingAvg: row.rating_avg ?? null,
     ratingCount: row.rating_count ?? 0,
     specialties: row.specialties ?? [],

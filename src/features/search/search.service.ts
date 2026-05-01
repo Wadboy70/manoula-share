@@ -20,11 +20,6 @@ function asNullableNumber(value: unknown): number | null {
   return null
 }
 
-function asBoolean(value: unknown, defaultValue: boolean): boolean {
-  if (typeof value === 'boolean') return value
-  return defaultValue
-}
-
 function parseSearchCardService(entry: unknown): SearchCardService | null {
   if (typeof entry !== 'object' || entry === null) return null
   const o = entry as Record<string, unknown>
@@ -82,9 +77,6 @@ function parseSearchCard(entry: unknown): SearchCard | null {
     mapboxId: asNullableString(row.mapboxId),
     latitude: asNullableNumber(row.latitude),
     longitude: asNullableNumber(row.longitude),
-    offersRemote: asBoolean(row.offersRemote, false),
-    offersInHome: asBoolean(row.offersInHome, false),
-    offersProviderLocation: asBoolean(row.offersProviderLocation, false),
     ratingAvg:
       typeof ratingAvgRaw === 'number' && Number.isFinite(ratingAvgRaw) ? ratingAvgRaw : null,
     ratingCount:

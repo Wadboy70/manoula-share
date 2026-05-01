@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom'
 import { MapPin } from 'lucide-react'
 
-import type { SearchCard, SearchCardService } from '@/features/search/search.types'
+import {
+  deliveryModalityLabelsFromServices,
+  type SearchCard,
+  type SearchCardService,
+} from '@/features/search/search.types'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -16,14 +20,6 @@ export function renderSearchCardName(card: SearchCard): string {
 export function renderSearchCardLocationLabel(card: SearchCard): string {
   const label = card.locationLabel?.trim()
   return label && label.length > 0 ? label : 'Service area coming soon'
-}
-
-function deliveryModalityLabels(card: SearchCard): string[] {
-  const labels: string[] = []
-  if (card.offersRemote) labels.push('Remote')
-  if (card.offersInHome) labels.push('In-home')
-  if (card.offersProviderLocation) labels.push('At provider location')
-  return labels
 }
 
 /** Specialty line: profile specialties joined, else deduped labels from services. */
@@ -65,7 +61,7 @@ export function SearchProviderCard({ card, className }: SearchProviderCardProps)
   const specialtyLine = specialtyDisplayLine(card)
   const services = dedupeServicesById(card.services)
 
-  const modalities = deliveryModalityLabels(card)
+  const modalities = deliveryModalityLabelsFromServices(services)
   const photoAlt =
     specialtyLine.length > 0 ? `${displayName}, ${specialtyLine.split(' · ')[0]}` : displayName
 

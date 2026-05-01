@@ -501,9 +501,6 @@ export type Database = {
           location_label: string | null
           longitude: number | null
           mapbox_id: string | null
-          offers_in_home: boolean | null
-          offers_provider_location: boolean | null
-          offers_remote: boolean | null
           professional_id: number | null
           profile_photo_url: string | null
           rating_avg: number | null

@@ -121,11 +121,16 @@ describe('SearchPage', () => {
           mapboxId: null,
           latitude: null,
           longitude: null,
-          offersRemote: true,
-          offersInHome: true,
-          offersProviderLocation: false,
           specialties: ['Lactation Consultant', 'Nutrition'],
           services: [
+            {
+              id: 98,
+              title: 'Virtual consult',
+              deliveryMode: 'remote',
+              priceCents: 5000,
+              currencyCode: 'GBP',
+              specialtyLabel: 'Lactation Consultant',
+            },
             {
               id: 99,
               title: 'Follow-up visit',
@@ -170,9 +175,6 @@ describe('SearchPage', () => {
           mapboxId: null,
           latitude: null,
           longitude: null,
-          offersRemote: false,
-          offersInHome: true,
-          offersProviderLocation: false,
           specialties: ['Doula'],
           services: [
             {
@@ -212,9 +214,6 @@ describe('SearchPage', () => {
           mapboxId: null,
           latitude: null,
           longitude: null,
-          offersRemote: true,
-          offersInHome: false,
-          offersProviderLocation: false,
           specialties: [],
           services: [],
         },
