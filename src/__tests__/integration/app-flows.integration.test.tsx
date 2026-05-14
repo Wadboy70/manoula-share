@@ -370,9 +370,26 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
   client.auth.signUp.mockResolvedValue({ error: null })
   client.auth.resetPasswordForEmail.mockResolvedValue({ error: null })
   client.auth.updateUser.mockResolvedValue({ data: { user: {} }, error: null })
-  client.functions.invoke.mockResolvedValue({
-    data: { cards: [], nextCursor: null, truncated: false },
-    error: null,
+  client.functions.invoke.mockImplementation(async (functionName: string) => {
+    if (functionName === 'location') {
+      return {
+        data: {
+          suggestions: [
+            {
+              id: 'integration-test-place',
+              label: 'London, UK',
+              placeId: 'place.integration',
+              latitude: 51.5074,
+              longitude: -0.1278,
+              countryCode: 'GB',
+              ancestorPlaceIds: [],
+            },
+          ],
+        },
+        error: null,
+      }
+    }
+    return { data: { cards: [], nextCursor: null, truncated: false }, error: null }
   })
   client.storage.from.mockReturnValue({
     upload: vi.fn(async () => ({ error: null })),
@@ -434,9 +451,26 @@ describe('integration: routing and search', () => {
     mockSb.store.serviceAreaPlaceRows = []
     mockSb.store.specialtyRows = []
     mockSb.resetHandlers()
-    mockSb.functions.invoke.mockResolvedValue({
-      data: { cards: [], nextCursor: null, truncated: false },
-      error: null,
+    mockSb.functions.invoke.mockImplementation(async (functionName: string) => {
+      if (functionName === 'location') {
+        return {
+          data: {
+            suggestions: [
+              {
+                id: 'integration-test-place',
+                label: 'London, UK',
+                placeId: 'place.integration',
+                latitude: 51.5074,
+                longitude: -0.1278,
+                countryCode: 'GB',
+                ancestorPlaceIds: [],
+              },
+            ],
+          },
+          error: null,
+        }
+      }
+      return { data: { cards: [], nextCursor: null, truncated: false }, error: null }
     })
   })
 
@@ -482,9 +516,29 @@ describe('integration: routing and search', () => {
     mockSb.store.usersRow = makeUsersRow({ is_professional: false })
     mockSb.store.profileRow = null
     const card = makeSearchInvokeCard()
-    mockSb.functions.invoke.mockResolvedValue({
-      data: { cards: [card], nextCursor: null, truncated: false },
-      error: null,
+    mockSb.functions.invoke.mockImplementation(async (functionName: string) => {
+      if (functionName === 'search-cards') {
+        return { data: { cards: [card], nextCursor: null, truncated: false }, error: null }
+      }
+      if (functionName === 'location') {
+        return {
+          data: {
+            suggestions: [
+              {
+                id: 'integration-test-place',
+                label: 'London, UK',
+                placeId: 'place.integration',
+                latitude: 51.5074,
+                longitude: -0.1278,
+                countryCode: 'GB',
+                ancestorPlaceIds: [],
+              },
+            ],
+          },
+          error: null,
+        }
+      }
+      return { data: { cards: [], nextCursor: null, truncated: false }, error: null }
     })
 
     renderWithApp(['/search'])
@@ -578,6 +632,31 @@ describe('integration: routing and search', () => {
     mockSb.store.credentialRows = [makeProfessionalCredentialRow()]
     mockSb.store.specialtyRows = [{ specialty_id: 1 }]
 
+    mockSb.functions.invoke.mockImplementation(async (fnName: string) => {
+      if (fnName === 'location') {
+        return {
+          data: {
+            suggestions: [
+              {
+                id: 'london-1',
+                label: 'London, UK',
+                placeId: 'place.integration-test',
+                latitude: 51.5074,
+                longitude: -0.1278,
+                countryCode: 'GB',
+                ancestorPlaceIds: [],
+              },
+            ],
+          },
+          error: null,
+        }
+      }
+      return {
+        data: { cards: [], nextCursor: null, truncated: false },
+        error: null,
+      }
+    })
+
     renderWithApp(['/dashboard/profile'])
     const u = userEvent.setup()
 
@@ -592,7 +671,11 @@ describe('integration: routing and search', () => {
     await u.clear(screen.getByLabelText(/bio \/ about/i))
     await u.type(screen.getByLabelText(/bio \/ about/i), '<script>alert(1)</script>Supportive care')
     await u.clear(screen.getByLabelText(/location/i))
-    await u.type(screen.getByLabelText(/location/i), 'London')
+    await u.type(screen.getByLabelText(/location/i), 'Lon')
+    await waitFor(() => {
+      expect(screen.getByRole('option', { name: /london, uk/i })).toBeInTheDocument()
+    })
+    await u.click(screen.getByRole('option', { name: /london, uk/i }))
     await u.click(screen.getByRole('button', { name: /save profile/i }))
 
     await waitFor(() => {

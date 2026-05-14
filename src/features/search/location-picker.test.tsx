@@ -27,6 +27,7 @@ describe('LocationPicker', () => {
         id="profile-location"
         label="Location"
         mode="profile"
+        hasResolvedPlaceId
         value="London, UK"
         onValueChange={vi.fn()}
         onSuggestionSelected={vi.fn()}
@@ -48,6 +49,7 @@ describe('LocationPicker', () => {
           id="profile-location"
           label="Location"
           mode="profile"
+          hasResolvedPlaceId={false}
           value={value}
           onValueChange={setValue}
           onSuggestionSelected={vi.fn()}
@@ -67,5 +69,43 @@ describe('LocationPicker', () => {
     })
 
     expect(fetchLocationSuggestionsMock).toHaveBeenCalledWith('Lond', 'profile')
+  })
+
+  it('clears profile mode text on blur when there is no resolved place id', () => {
+    const onValueChange = vi.fn()
+    render(
+      <LocationPicker
+        id="profile-location"
+        label="Location"
+        mode="profile"
+        hasResolvedPlaceId={false}
+        value="Typed only"
+        onValueChange={onValueChange}
+        onSuggestionSelected={vi.fn()}
+      />,
+    )
+
+    fireEvent.blur(screen.getByLabelText(/location/i))
+
+    expect(onValueChange).toHaveBeenCalledWith('')
+  })
+
+  it('does not clear profile mode on blur when a place id is resolved', () => {
+    const onValueChange = vi.fn()
+    render(
+      <LocationPicker
+        id="profile-location"
+        label="Location"
+        mode="profile"
+        hasResolvedPlaceId
+        value="London, UK"
+        onValueChange={onValueChange}
+        onSuggestionSelected={vi.fn()}
+      />,
+    )
+
+    fireEvent.blur(screen.getByLabelText(/location/i))
+
+    expect(onValueChange).not.toHaveBeenCalled()
   })
 })

@@ -1,33 +1,40 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { Input } from '@/components/ui/input'
-import { fetchLocationSuggestions, type LocationLookupMode } from '@/features/search/location.service'
+import { LOCATION_SUGGESTION_MIN_QUERY_LENGTH } from '@/features/search/location.constants'
+import { fetchLocationSuggestions } from '@/features/search/location.service'
 import type { LocationSuggestion } from '@/features/search/location.types'
 
 const LOCATION_DEBOUNCE_MS = 300
-const LOCATION_MIN_QUERY_LENGTH = 3
 
-type LocationPickerProps = {
+type LocationPickerBaseProps = {
   id: string
   label: string
   value: string
-  mode?: LocationLookupMode
   placeholder?: string
   maxLength?: number
   onValueChange: (value: string) => void
   onSuggestionSelected: (suggestion: LocationSuggestion) => void
 }
 
-export function LocationPicker({
-  id,
-  label,
-  value,
-  mode = 'search',
-  placeholder = 'City or region (min. 3 characters)',
-  maxLength,
-  onValueChange,
-  onSuggestionSelected,
-}: LocationPickerProps) {
+export type LocationPickerProps = LocationPickerBaseProps &
+  (
+    | { mode?: 'search' }
+    | { mode: 'profile'; hasResolvedPlaceId: boolean }
+  )
+
+export function LocationPicker(props: LocationPickerProps) {
+  const {
+    id,
+    label,
+    value,
+    placeholder = `City or region (min. ${LOCATION_SUGGESTION_MIN_QUERY_LENGTH} characters)`,
+    maxLength,
+    onValueChange,
+    onSuggestionSelected,
+  } = props
+  const mode = props.mode ?? 'search'
+  const hasResolvedPlaceId = props.mode === 'profile' ? props.hasResolvedPlaceId : false
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([])
   const [loading, setLoading] = useState(false)
@@ -45,7 +52,7 @@ export function LocationPicker({
 
   useEffect(() => {
     const trimmed = debouncedQuery
-    if (!hasUserEdited || trimmed.length < LOCATION_MIN_QUERY_LENGTH || suppressed) {
+    if (!hasUserEdited || trimmed.length < LOCATION_SUGGESTION_MIN_QUERY_LENGTH || suppressed) {
       setSuggestions([])
       setError(null)
       setLoading(false)
@@ -74,6 +81,16 @@ export function LocationPicker({
     })()
   }, [debouncedQuery, mode, suppressed, hasUserEdited])
 
+  function handleBlurUncommittedProfile() {
+    if (mode !== 'profile') return
+    if (hasResolvedPlaceId) return
+    if (!value.trim()) return
+    onValueChange('')
+    setSuggestions([])
+    setHasUserEdited(false)
+    setSuppressed(false)
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor={id} className="text-sm font-medium">
@@ -92,6 +109,7 @@ export function LocationPicker({
             setSuppressed(false)
             onValueChange(event.target.value)
           }}
+          onBlur={handleBlurUncommittedProfile}
           aria-autocomplete="list"
           aria-expanded={suggestions.length > 0}
           aria-controls={`${id}-suggestions`}
@@ -108,6 +126,9 @@ export function LocationPicker({
                   type="button"
                   role="option"
                   className="hover:bg-input/50 w-full px-3 py-2 text-left text-sm text-white"
+                  onMouseDown={(event) => {
+                    event.preventDefault()
+                  }}
                   onClick={() => {
                     onValueChange(suggestion.label)
                     onSuggestionSelected(suggestion)

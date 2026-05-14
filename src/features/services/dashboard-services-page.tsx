@@ -469,6 +469,7 @@ export function DashboardServicesPage() {
                       id={`provider-location-picker-${index}`}
                       label="Location"
                       mode="profile"
+                      hasResolvedPlaceId={location.placeId.trim().length > 0}
                       maxLength={SERVICE_LIMITS.locationLabelMax}
                       value={location.locationLabel}
                       onValueChange={(next) =>
@@ -607,6 +608,7 @@ export function DashboardServicesPage() {
                       id={`in-home-place-picker-${index}`}
                       label="Service area place"
                       mode="profile"
+                      hasResolvedPlaceId={place.placeId.trim().length > 0}
                       maxLength={SERVICE_LIMITS.locationLabelMax}
                       value={place.locationLabel}
                       onValueChange={(next) =>

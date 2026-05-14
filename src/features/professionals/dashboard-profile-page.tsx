@@ -281,6 +281,12 @@ export function DashboardProfilePage() {
     )
   }, [lengthErrors, nameCharacterErrors])
 
+  const hasUncommittedLocationText = useMemo(() => {
+    const label = profile.locationLabel.trim()
+    if (!label) return false
+    return profile.placeId.trim().length === 0
+  }, [profile.locationLabel, profile.placeId])
+
   useEffect(() => {
     return () => {
       if (pendingPhotoPreviewUrl) {
@@ -320,7 +326,7 @@ export function DashboardProfilePage() {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (hasLengthErrors) return
+    if (hasLengthErrors || hasUncommittedLocationText) return
 
     setState((prev) => ({ ...prev, saving: true, error: null, success: null }))
 
@@ -464,9 +470,6 @@ export function DashboardProfilePage() {
                       alt="Current profile"
                       className="border-foreground/10 h-24 w-24 rounded-full border object-cover"
                     />
-                    {profile.profilePhotoUrl ? (
-                      <p className="text-muted-foreground text-xs break-all">{profile.profilePhotoUrl}</p>
-                    ) : null}
                     {pendingPhotoFile ? (
                       <p className="text-muted-foreground text-xs">
                         New photo selected ({pendingPhotoFile.name}). It will upload when you save.
@@ -506,6 +509,7 @@ export function DashboardProfilePage() {
                   id="profile-location"
                   label="Location"
                   mode="profile"
+                  hasResolvedPlaceId={profile.placeId.trim().length > 0}
                   value={profile.locationLabel}
                   onValueChange={(nextValue) =>
                     setProfile((prev) => ({
@@ -717,7 +721,11 @@ export function DashboardProfilePage() {
             </p>
           ) : null}
 
-          <Button type="submit" disabled={state.saving || hasLengthErrors} className="rounded-none">
+          <Button
+            type="submit"
+            disabled={state.saving || hasLengthErrors || hasUncommittedLocationText}
+            className="rounded-none"
+          >
             {state.saving ? 'Saving profile...' : 'Save profile'}
           </Button>
         </form>
