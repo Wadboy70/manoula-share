@@ -9,7 +9,7 @@ type SearchCardSelectRow = Pick<
   | 'profile_photo_url'
   | 'country_code'
   | 'location_label'
-  | 'mapbox_id'
+  | 'place_id'
   | 'latitude'
   | 'longitude'
   | 'specialties'
@@ -80,10 +80,11 @@ function parseServicesFromViewJson(value: unknown): SearchCardService[] {
 
 /** User-selected place from autocomplete, sent to `search-cards` for geo filtering. */
 export type SearchLocationFilter = {
-  mapboxId: string
+  placeId: string
   latitude: number
   longitude: number
-  ancestorMapboxIds: string[]
+  countryCode: string
+  ancestorPlaceIds: string[]
   /** Client-only: display string for the location field; not sent to the edge function. */
   label?: string
 }
@@ -91,10 +92,11 @@ export type SearchLocationFilter = {
 /** POST body for `search-cards` (fields the SPA sends). */
 export type SearchCardsInvokeRequestBody = {
   location?: {
-    mapboxId: string
+    placeId: string
     latitude: number
     longitude: number
-    ancestorMapboxIds: string[]
+    countryCode: string
+    ancestorPlaceIds: string[]
   }
   specialtyLabel?: string
   deliveryMode?: string
@@ -121,7 +123,7 @@ export type SearchCard = {
   profilePhotoUrl: string | null
   countryCode: string | null
   locationLabel: string | null
-  mapboxId: string | null
+  placeId: string | null
   latitude: number | null
   longitude: number | null
   /** Denormalized from profile when returned by search RPC (optional for older mocks). */
@@ -141,7 +143,7 @@ export function toSearchCard(row: SearchCardSelectRow): SearchCard | null {
     profilePhotoUrl: row.profile_photo_url,
     countryCode: row.country_code,
     locationLabel: row.location_label,
-    mapboxId: row.mapbox_id,
+    placeId: row.place_id,
     latitude: row.latitude,
     longitude: row.longitude,
     ratingAvg: row.rating_avg ?? null,

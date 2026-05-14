@@ -4,7 +4,7 @@ export const PROFILE_LIMITS = {
   bioMax: 300,
   specialtyMax: 120,
   locationMax: 160,
-  mapboxIdMax: 255,
+  placeIdMax: 2048,
   credentialTypeMax: 120,
   issuingBodyMax: 160,
   registrationNumberMax: 80,

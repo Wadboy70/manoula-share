@@ -59,7 +59,7 @@ describe('DashboardProfilePage', () => {
         bio: 'Supportive care',
         profilePhotoUrl: '',
         locationLabel: 'London',
-        mapboxId: 'place.123',
+        placeId: 'place.123',
         latitude: 51.5074,
         longitude: -0.1278,
         geocodedAt: '2026-04-29T00:00:00.000Z',

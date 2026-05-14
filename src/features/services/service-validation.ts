@@ -7,7 +7,7 @@ export const SERVICE_LIMITS = {
   remoteScopeMax: 32,
   serviceAreaTextMax: 300,
   locationLabelMax: 160,
-  mapboxIdMax: 255,
+  placeIdMax: 2048,
   locationNameMax: 160,
   maxLocationsPerService: 25,
 } as const
@@ -32,7 +32,7 @@ function normalizeLocation(input: ServiceProviderLocationInput): ServiceProvider
     ...input,
     locationName: normalizePlainText(input.locationName, SERVICE_LIMITS.locationNameMax),
     locationLabel: normalizePlainText(input.locationLabel, SERVICE_LIMITS.locationLabelMax),
-    mapboxId: normalizePlainText(input.mapboxId, SERVICE_LIMITS.mapboxIdMax),
+    placeId: normalizePlainText(input.placeId, SERVICE_LIMITS.placeIdMax),
     countryCode: normalizePlainText(input.countryCode, SERVICE_LIMITS.currencyCodeLen).toUpperCase(),
   }
 }
@@ -41,7 +41,7 @@ function normalizeAreaPlace(input: ServiceAreaPlaceInput): ServiceAreaPlaceInput
   return {
     ...input,
     locationLabel: normalizePlainText(input.locationLabel, SERVICE_LIMITS.locationLabelMax),
-    mapboxId: normalizePlainText(input.mapboxId, SERVICE_LIMITS.mapboxIdMax),
+    placeId: normalizePlainText(input.placeId, SERVICE_LIMITS.placeIdMax),
     countryCode: normalizePlainText(input.countryCode, SERVICE_LIMITS.currencyCodeLen).toUpperCase(),
   }
 }

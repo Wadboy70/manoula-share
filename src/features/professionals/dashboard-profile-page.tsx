@@ -56,7 +56,7 @@ function buildEmptyProfile(): ProfessionalProfileEditorData {
     bio: '',
     profilePhotoUrl: '',
     locationLabel: '',
-    mapboxId: '',
+    placeId: '',
     latitude: null,
     longitude: null,
     geocodedAt: null,
@@ -511,7 +511,7 @@ export function DashboardProfilePage() {
                     setProfile((prev) => ({
                       ...prev,
                       locationLabel: nextValue,
-                      mapboxId: '',
+                      placeId: '',
                       latitude: null,
                       longitude: null,
                       geocodedAt: null,
@@ -521,9 +521,10 @@ export function DashboardProfilePage() {
                     setProfile((prev) => ({
                       ...prev,
                       locationLabel: suggestion.label,
-                      mapboxId: suggestion.mapboxId,
+                      placeId: suggestion.placeId,
                       latitude: suggestion.latitude,
                       longitude: suggestion.longitude,
+                      countryCode: suggestion.countryCode,
                       geocodedAt: new Date().toISOString(),
                     }))
                   }

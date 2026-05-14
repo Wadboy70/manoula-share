@@ -6,7 +6,7 @@ This file documents tables and fields that matter for current search/profile/ser
 
 - Identity stays in `users`; search/listing state stays in `professional_search_profiles`.
 - Search matching is service-aware (`services` + location child tables), not just profile-aware.
-- Mapbox-backed fields (`mapbox_id`, lat/lng, labels) stay first-class to keep geo filters deterministic.
+- Geoapify-backed fields (`place_id`, lat/lng, labels) stay first-class to keep geo filters deterministic.
 - Service geography is split by mode so we avoid one overloaded “location” field.
 
 ## `professional_search_profiles`
@@ -15,7 +15,7 @@ One row per professional (`user_id` = `users.id`), used for listing readiness an
 
 Key fields:
 - Listing gates: `is_profile_complete`, `is_public_searchable`, `is_active`, `is_approved`
-- Base place: `location_label`, `mapbox_id`, `latitude`, `longitude`, `geocoded_at`, `country_code`
+- Base place: `location_label`, `place_id`, `latitude`, `longitude`, `geocoded_at`, `country_code`
 - Modality flags: `offers_remote`, `offers_in_home`, `offers_provider_location`
 - Ranking helpers: `rating_avg`, `rating_count`
 
@@ -44,7 +44,7 @@ Provider-controlled visit places for `delivery_mode = provider_location` service
 
 Key fields:
 - FK: `service_id`
-- Place data: `location_name`, `location_label`, `mapbox_id`, `latitude`, `longitude`, `geocoded_at`, `country_code`
+- Place data: `location_name`, `location_label`, `place_id`, `latitude`, `longitude`, `geocoded_at`, `country_code`
 
 Reasoning:
 - Naming and geocoded place data live at the row level so one service can support multiple provider locations.
@@ -52,11 +52,11 @@ Reasoning:
 
 ## `service_area_places`
 
-Mapbox-backed explicit coverage rows for place-list service areas.
+Geoapify-backed explicit coverage rows for place-list service areas.
 
 Key fields:
 - FK: `service_id`
-- Place data: `location_label`, `mapbox_id`, `latitude`, `longitude`, `geocoded_at`, `country_code`
+- Place data: `location_label`, `place_id`, `latitude`, `longitude`, `geocoded_at`, `country_code`
 
 Reasoning:
 - Used when service coverage is enumerated by places rather than radius.

@@ -156,10 +156,11 @@ export function SearchPage() {
                       }}
                       onSuggestionSelected={(suggestion) => {
                         setAppliedSearchLocation({
-                          mapboxId: suggestion.mapboxId,
+                          placeId: suggestion.placeId,
                           latitude: suggestion.latitude,
                           longitude: suggestion.longitude,
-                          ancestorMapboxIds: suggestion.ancestorMapboxIds,
+                          countryCode: suggestion.countryCode,
+                          ancestorPlaceIds: suggestion.ancestorPlaceIds,
                           label: suggestion.label,
                         })
                       }}

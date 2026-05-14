@@ -47,10 +47,11 @@ function mockLocationSuggestion(overrides: Partial<{ id: string; label: string }
   return {
     id: 'mb-los-angeles',
     label: 'Los Angeles, CA',
-    mapboxId: 'mb-los-angeles',
+    placeId: 'mb-los-angeles',
     latitude: 34.05,
     longitude: -118.25,
-    ancestorMapboxIds: ['mb-ca', 'mb-us'],
+    countryCode: 'US',
+    ancestorPlaceIds: ['mb-ca', 'mb-us'],
     ...overrides,
   }
 }
@@ -118,7 +119,7 @@ describe('SearchPage', () => {
           profilePhotoUrl: 'https://mockmind-api.uifaces.co/content/human/212.jpg',
           countryCode: 'NG',
           locationLabel: 'In-person and virtual',
-          mapboxId: null,
+          placeId: null,
           latitude: null,
           longitude: null,
           specialties: ['Lactation Consultant', 'Nutrition'],
@@ -172,7 +173,7 @@ describe('SearchPage', () => {
           profilePhotoUrl: null,
           countryCode: 'NG',
           locationLabel: 'London',
-          mapboxId: null,
+          placeId: null,
           latitude: null,
           longitude: null,
           specialties: ['Doula'],
@@ -211,7 +212,7 @@ describe('SearchPage', () => {
           profilePhotoUrl: null,
           countryCode: 'GB',
           locationLabel: 'London',
-          mapboxId: null,
+          placeId: null,
           latitude: null,
           longitude: null,
           specialties: [],
@@ -285,10 +286,11 @@ describe('SearchPage', () => {
 
     expect(useSearchResultsMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        mapboxId: 'mb-los-angeles',
+        placeId: 'mb-los-angeles',
         latitude: 34.05,
         longitude: -118.25,
-        ancestorMapboxIds: ['mb-ca', 'mb-us'],
+        countryCode: 'US',
+        ancestorPlaceIds: ['mb-ca', 'mb-us'],
         label: 'Los Angeles, CA',
       }),
       null,

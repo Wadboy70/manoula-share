@@ -99,7 +99,7 @@ export type Database = {
           latitude: number | null
           location_label: string | null
           longitude: number | null
-          mapbox_id: string | null
+          place_id: string | null
           offers_in_home: boolean
           offers_provider_location: boolean
           offers_remote: boolean
@@ -117,7 +117,7 @@ export type Database = {
           latitude?: number | null
           location_label?: string | null
           longitude?: number | null
-          mapbox_id?: string | null
+          place_id?: string | null
           offers_in_home?: boolean
           offers_provider_location?: boolean
           offers_remote?: boolean
@@ -135,7 +135,7 @@ export type Database = {
           latitude?: number | null
           location_label?: string | null
           longitude?: number | null
-          mapbox_id?: string | null
+          place_id?: string | null
           offers_in_home?: boolean
           offers_provider_location?: boolean
           offers_remote?: boolean
@@ -265,7 +265,7 @@ export type Database = {
           latitude: number | null
           location_label: string | null
           longitude: number | null
-          mapbox_id: string | null
+          place_id: string | null
           service_id: number
         }
         Insert: {
@@ -276,7 +276,7 @@ export type Database = {
           latitude?: number | null
           location_label?: string | null
           longitude?: number | null
-          mapbox_id?: string | null
+          place_id?: string | null
           service_id: number
         }
         Update: {
@@ -287,7 +287,7 @@ export type Database = {
           latitude?: number | null
           location_label?: string | null
           longitude?: number | null
-          mapbox_id?: string | null
+          place_id?: string | null
           service_id?: number
         }
         Relationships: [
@@ -310,7 +310,7 @@ export type Database = {
           location_label: string | null
           location_name: string | null
           longitude: number | null
-          mapbox_id: string | null
+          place_id: string | null
           service_id: number
         }
         Insert: {
@@ -322,7 +322,7 @@ export type Database = {
           location_label?: string | null
           location_name?: string | null
           longitude?: number | null
-          mapbox_id?: string | null
+          place_id?: string | null
           service_id: number
         }
         Update: {
@@ -334,7 +334,7 @@ export type Database = {
           location_label?: string | null
           location_name?: string | null
           longitude?: number | null
-          mapbox_id?: string | null
+          place_id?: string | null
           service_id?: number
         }
         Relationships: [
@@ -500,7 +500,7 @@ export type Database = {
           latitude: number | null
           location_label: string | null
           longitude: number | null
-          mapbox_id: string | null
+          place_id: string | null
           professional_id: number | null
           profile_photo_url: string | null
           rating_avg: number | null
@@ -541,10 +541,10 @@ export type Database = {
       search_service_matches_location: {
         Args: {
           p_service_id: number
-          p_user_mapbox_id: string
+          p_user_place_id: string
           p_user_lat: number
           p_user_lng: number
-          p_ancestor_mapbox_ids: string[]
+          p_ancestor_place_ids: string[]
           p_profile_lat: number | null
           p_profile_lng: number | null
         }

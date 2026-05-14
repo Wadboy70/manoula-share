@@ -1,12 +1,12 @@
 export type LocationSuggestion = {
   id: string
   label: string
-  mapboxId: string
+  placeId: string
   latitude: number
   longitude: number
   countryCode: string
-  /** Parent place ids from Mapbox `properties.context` (user narrower than stored coverage). */
-  ancestorMapboxIds: string[]
+  /** Parent Geoapify place ids (e.g. city) for containment vs stored coverage rows. */
+  ancestorPlaceIds: string[]
 }
 
 export type LocationSuggestionsPayload = {

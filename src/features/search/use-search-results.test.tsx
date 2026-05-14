@@ -20,10 +20,11 @@ describe('useSearchResults', () => {
 
   it('loads with null location then refetches when searchLocation changes', async () => {
     const location: SearchLocationFilter = {
-      mapboxId: 'mb1',
+      placeId: 'mb1',
       latitude: 10,
       longitude: 20,
-      ancestorMapboxIds: ['p1'],
+      countryCode: 'GB',
+      ancestorPlaceIds: ['p1'],
     }
 
     const { rerender } = renderHook(

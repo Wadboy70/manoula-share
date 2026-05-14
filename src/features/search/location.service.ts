@@ -3,7 +3,7 @@ import type { LocationSuggestion, LocationSuggestionsPayload } from '@/features/
 
 export type LocationLookupMode = 'search' | 'profile'
 
-function parseAncestorMapboxIds(raw: unknown): string[] {
+function parseAncestorPlaceIds(raw: unknown): string[] {
   if (!Array.isArray(raw)) return []
   const out: string[] = []
   for (const item of raw) {
@@ -16,24 +16,24 @@ function parseLocationSuggestion(entry: unknown): LocationSuggestion | null {
   if (typeof entry !== 'object' || entry === null) return null
   const row = entry as Record<string, unknown>
   if (typeof row.id !== 'string' || typeof row.label !== 'string') return null
-  const mapboxId = typeof row.mapboxId === 'string' ? row.mapboxId.trim() : ''
-  if (!mapboxId) return null
+  const placeId = typeof row.placeId === 'string' ? row.placeId.trim() : ''
+  if (!placeId) return null
   const lat = row.latitude
   const lng = row.longitude
   if (typeof lat !== 'number' || typeof lng !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lng)) {
     return null
   }
-  const ancestorMapboxIds = parseAncestorMapboxIds(row.ancestorMapboxIds)
+  const ancestorPlaceIds = parseAncestorPlaceIds(row.ancestorPlaceIds)
   const countryCode = typeof row.countryCode === 'string' ? row.countryCode.trim().toUpperCase() : ''
   if (!countryCode || countryCode.length !== 2) return null
   return {
     id: row.id,
     label: row.label,
-    mapboxId,
+    placeId,
     latitude: lat,
     longitude: lng,
     countryCode,
-    ancestorMapboxIds,
+    ancestorPlaceIds,
   }
 }
 

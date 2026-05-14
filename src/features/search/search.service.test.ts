@@ -28,7 +28,7 @@ describe('fetchSearchCards', () => {
             profilePhotoUrl: null,
             countryCode: 'NG',
             locationLabel: 'In-person and virtual',
-            mapboxId: null,
+            placeId: null,
             latitude: null,
             longitude: null,
             specialties: ['Lactation Consultant'],
@@ -62,7 +62,7 @@ describe('fetchSearchCards', () => {
         profilePhotoUrl: null,
         countryCode: 'NG',
         locationLabel: 'In-person and virtual',
-        mapboxId: null,
+        placeId: null,
         latitude: null,
         longitude: null,
         ratingAvg: null,
@@ -85,19 +85,21 @@ describe('fetchSearchCards', () => {
   it('sends location in invoke body when a filter is provided', async () => {
     invokeMock.mockResolvedValue({ data: { cards: [], ...emptyMeta }, error: null })
     const loc = {
-      mapboxId: 'dXJuOm1ieHBsYzp',
+      placeId: 'dXJuOm1ieHBsYzp',
       latitude: 51.5,
       longitude: -0.12,
-      ancestorMapboxIds: ['parent-id'],
+      countryCode: 'GB',
+      ancestorPlaceIds: ['parent-id'],
     }
     await fetchSearchCards({ location: loc })
     expect(invokeMock).toHaveBeenCalledWith('search-cards', {
       body: {
         location: {
-          mapboxId: loc.mapboxId,
+          placeId: loc.placeId,
           latitude: loc.latitude,
           longitude: loc.longitude,
-          ancestorMapboxIds: loc.ancestorMapboxIds,
+          countryCode: loc.countryCode,
+          ancestorPlaceIds: loc.ancestorPlaceIds,
         },
       },
     })
@@ -122,19 +124,21 @@ describe('fetchSearchCards', () => {
   it('sends location and specialtyLabel together when both are provided', async () => {
     invokeMock.mockResolvedValue({ data: { cards: [], ...emptyMeta }, error: null })
     const loc = {
-      mapboxId: 'mb1',
+      placeId: 'mb1',
       latitude: 1,
       longitude: 2,
-      ancestorMapboxIds: [],
+      countryCode: 'GB',
+      ancestorPlaceIds: [],
     }
     await fetchSearchCards({ location: loc, specialtyLabel: 'Lactation Consultant' })
     expect(invokeMock).toHaveBeenCalledWith('search-cards', {
       body: {
         location: {
-          mapboxId: 'mb1',
+          placeId: 'mb1',
           latitude: 1,
           longitude: 2,
-          ancestorMapboxIds: [],
+          countryCode: 'GB',
+          ancestorPlaceIds: [],
         },
         specialtyLabel: 'Lactation Consultant',
       },
@@ -152,7 +156,7 @@ describe('fetchSearchCards', () => {
             profilePhotoUrl: null,
             countryCode: null,
             locationLabel: null,
-            mapboxId: null,
+            placeId: null,
             latitude: null,
             longitude: null,
             specialties: null,

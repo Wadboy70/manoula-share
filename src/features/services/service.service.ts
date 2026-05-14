@@ -61,7 +61,7 @@ function mapProviderLocationRowToInput(
     id: row.id,
     locationName: row.location_name ?? '',
     locationLabel: row.location_label ?? '',
-    mapboxId: row.mapbox_id ?? '',
+    placeId: row.place_id ?? '',
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
     geocodedAt: row.geocoded_at ?? null,
@@ -75,7 +75,7 @@ function mapAreaPlaceRowToInput(
   return {
     id: row.id,
     locationLabel: row.location_label ?? '',
-    mapboxId: row.mapbox_id ?? '',
+    placeId: row.place_id ?? '',
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
     geocodedAt: row.geocoded_at ?? null,
@@ -151,13 +151,13 @@ export async function fetchServicesEditorData(): Promise<ServiceResult<ServicesE
           supabase
             .from('service_provider_locations')
             .select(
-              'id,service_id,location_name,location_label,mapbox_id,latitude,longitude,geocoded_at,country_code',
+              'id,service_id,location_name,location_label,place_id,latitude,longitude,geocoded_at,country_code',
             )
             .in('service_id', serviceIds)
             .order('id', { ascending: true }),
           supabase
             .from('service_area_places')
-            .select('id,service_id,location_label,mapbox_id,latitude,longitude,geocoded_at,country_code')
+            .select('id,service_id,location_label,place_id,latitude,longitude,geocoded_at,country_code')
             .in('service_id', serviceIds)
             .order('id', { ascending: true }),
         ])
@@ -221,7 +221,7 @@ async function replaceProviderLocations(serviceId: number, rows: ServiceProvider
     service_id: serviceId,
     location_name: row.locationName || null,
     location_label: row.locationLabel || null,
-    mapbox_id: row.mapboxId || null,
+    place_id: row.placeId || null,
     latitude: row.latitude,
     longitude: row.longitude,
     geocoded_at: row.geocodedAt,
@@ -239,7 +239,7 @@ async function replaceAreaPlaces(serviceId: number, rows: ServiceAreaPlaceInput[
   const payload: TablesInsert<'service_area_places'>[] = rows.map((row) => ({
     service_id: serviceId,
     location_label: row.locationLabel || null,
-    mapbox_id: row.mapboxId || null,
+    place_id: row.placeId || null,
     latitude: row.latitude,
     longitude: row.longitude,
     geocoded_at: row.geocodedAt,

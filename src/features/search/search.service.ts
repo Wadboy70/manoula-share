@@ -74,7 +74,7 @@ function parseSearchCard(entry: unknown): SearchCard | null {
     profilePhotoUrl: asNullableString(row.profilePhotoUrl),
     countryCode: asNullableString(row.countryCode),
     locationLabel: asNullableString(row.locationLabel),
-    mapboxId: asNullableString(row.mapboxId),
+    placeId: asNullableString(row.placeId),
     latitude: asNullableNumber(row.latitude),
     longitude: asNullableNumber(row.longitude),
     ratingAvg:
@@ -152,10 +152,11 @@ export async function fetchSearchCards(options?: FetchSearchCardsOptions): Promi
   const body: SearchCardsInvokeRequestBody = {}
   if (location !== null) {
     body.location = {
-      mapboxId: location.mapboxId,
+      placeId: location.placeId,
       latitude: location.latitude,
       longitude: location.longitude,
-      ancestorMapboxIds: location.ancestorMapboxIds,
+      countryCode: location.countryCode,
+      ancestorPlaceIds: location.ancestorPlaceIds,
     }
   }
   if (specialtyTrimmed !== null) {

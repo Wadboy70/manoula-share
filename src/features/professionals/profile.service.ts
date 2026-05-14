@@ -17,7 +17,7 @@ export type ProfessionalProfileEditorData = {
   bio: string
   profilePhotoUrl: string
   locationLabel: string
-  mapboxId: string
+  placeId: string
   latitude: number | null
   longitude: number | null
   geocodedAt: string | null
@@ -36,7 +36,7 @@ export function serializeProfileEditorStateForDirtyCheck(data: ProfessionalProfi
     bio: data.bio,
     profilePhotoUrl: data.profilePhotoUrl,
     locationLabel: data.locationLabel,
-    mapboxId: data.mapboxId,
+    placeId: data.placeId,
     latitude: data.latitude,
     longitude: data.longitude,
     geocodedAt: data.geocodedAt,
@@ -108,7 +108,7 @@ export async function fetchProfessionalProfileEditorData(): Promise<
         .single(),
       supabase
         .from('professional_search_profiles')
-        .select('location_label,mapbox_id,latitude,longitude,geocoded_at,is_public_searchable,country_code')
+        .select('location_label,place_id,latitude,longitude,geocoded_at,is_public_searchable,country_code')
         .eq('user_id', professionalId)
         .single(),
     ])
@@ -146,7 +146,7 @@ export async function fetchProfessionalProfileEditorData(): Promise<
       bio: userRow.bio ?? '',
       profilePhotoUrl: userRow.profile_photo_url ?? '',
       locationLabel: profileRow.location_label ?? '',
-      mapboxId: profileRow.mapbox_id ?? '',
+      placeId: profileRow.place_id ?? '',
       latitude: profileRow.latitude ?? null,
       longitude: profileRow.longitude ?? null,
       geocodedAt: profileRow.geocoded_at ?? null,
@@ -248,7 +248,7 @@ export async function saveProfessionalProfileEditorData(
       .from('professional_search_profiles')
       .update({
         location_label: payload.locationLabel || null,
-        mapbox_id: payload.mapboxId || null,
+        place_id: payload.placeId || null,
         latitude: payload.latitude,
         longitude: payload.longitude,
         geocoded_at: payload.geocodedAt,
@@ -336,7 +336,7 @@ export function sanitizeProfessionalProfileEditorData(
     lastName: normalizePlainText(raw.lastName, PROFILE_LIMITS.lastNameMax),
     bio: normalizePlainText(raw.bio, PROFILE_LIMITS.bioMax, { collapse: false }),
     locationLabel: normalizePlainText(raw.locationLabel, PROFILE_LIMITS.locationMax),
-    mapboxId: normalizePlainText(raw.mapboxId, PROFILE_LIMITS.mapboxIdMax),
+    placeId: normalizePlainText(raw.placeId, PROFILE_LIMITS.placeIdMax),
     latitude: raw.latitude,
     longitude: raw.longitude,
     geocodedAt: raw.geocodedAt,

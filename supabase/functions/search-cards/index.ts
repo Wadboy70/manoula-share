@@ -38,11 +38,11 @@ function jwtRole(authHeader: string): JwtRole {
 }
 
 type SearchLocationFilter = {
-  mapboxId: string
+  placeId: string
   latitude: number
   longitude: number
   countryCode: string
-  ancestorMapboxIds: string[]
+  ancestorPlaceIds: string[]
 }
 
 type SearchCursorWire = {
@@ -90,9 +90,9 @@ function parseLocationFilter(body: unknown): ParseLocationResult {
     return { ok: false, message: 'Invalid location payload' }
   }
   const o = loc as Record<string, unknown>
-  const mapboxId = typeof o.mapboxId === 'string' ? o.mapboxId.trim() : ''
-  if (!mapboxId) {
-    return { ok: false, message: 'location.mapboxId is required' }
+  const placeIdRaw = typeof o.placeId === 'string' ? o.placeId.trim() : ''
+  if (!placeIdRaw) {
+    return { ok: false, message: 'location.placeId is required' }
   }
   const lat = o.latitude
   const lng = o.longitude
@@ -104,16 +104,16 @@ function parseLocationFilter(body: unknown): ParseLocationResult {
     return { ok: false, message: 'location.countryCode is required and must be an ISO-2 code' }
   }
 
-  let ancestorMapboxIds: string[] = []
-  const anc = o.ancestorMapboxIds
+  let ancestorPlaceIds: string[] = []
+  const anc = o.ancestorPlaceIds
   if (anc === undefined || anc === null) {
-    ancestorMapboxIds = []
+    ancestorPlaceIds = []
   } else if (!Array.isArray(anc)) {
-    return { ok: false, message: 'location.ancestorMapboxIds must be an array of strings' }
+    return { ok: false, message: 'location.ancestorPlaceIds must be an array of strings' }
   } else {
     for (const item of anc) {
       if (typeof item === 'string' && item.length > 0) {
-        ancestorMapboxIds.push(item)
+        ancestorPlaceIds.push(item)
       }
     }
   }
@@ -121,11 +121,11 @@ function parseLocationFilter(body: unknown): ParseLocationResult {
   return {
     ok: true,
     location: {
-      mapboxId,
+      placeId: placeIdRaw,
       latitude: lat,
       longitude: lng,
       countryCode: countryCodeRaw,
-      ancestorMapboxIds,
+      ancestorPlaceIds,
     },
   }
 }
@@ -321,11 +321,11 @@ Deno.serve(async (req) => {
     location === null
       ? null
       : {
-          mapboxId: location.mapboxId,
+          placeId: location.placeId,
           latitude: location.latitude,
           longitude: location.longitude,
           countryCode: location.countryCode,
-          ancestorMapboxIds: location.ancestorMapboxIds,
+          ancestorPlaceIds: location.ancestorPlaceIds,
         }
 
   const { data, error } = await supabase.rpc('search_professional_cards_page', {

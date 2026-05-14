@@ -2,18 +2,15 @@
 -- Safe to run repeatedly (`supabase db query --local --file ...` or via seed:local script).
 --
 -- Geographic columns follow `docs/database-schema.md`:
---   professional_search_profiles: base/home Mapbox place (radius checks use this lat/lng).
+--   professional_search_profiles: base/home place (radius checks use this lat/lng).
 --   services: delivery_mode, service_area_type, service_radius_km, service_area_text.
 --   service_area_places: explicit cities/regions for service_area_type = place_list.
 --   service_provider_locations: clinic/studio rows for delivery_mode = provider_location.
 --
--- `mapbox_id` / coordinates for profiles and geo child rows come from Mapbox Geocoding v6
--- forward results captured in `notes/mapbox-id-locations.md` (feature `id` / `properties.mapbox_id`,
--- `geometry.coordinates` as [longitude, latitude]). Greater London row uses the London feature's
--- `context.district.mapbox_id` (Greater London) with an approximate centroid for lat/lng.
+-- `place_id` / coordinates are stable Geoapify-style opaque ids for local fixtures (not live API output).
 --
 -- Seed professionals (15): seven detailed fixtures (Ada…Mei) plus eight “pagination bench” pros
--- (remote-only, reused Mapbox home coords from the rows above) so authenticated /search can load
+-- (remote-only, reused home coords from the rows above) so authenticated /search can load
 -- more than one page at limit 10. See `--- Search pagination / ratings ---` for reviews.
 
 do $$
@@ -205,7 +202,7 @@ begin
     is_approved,
     country_code,
     location_label,
-    mapbox_id,
+    place_id,
     latitude,
     longitude,
     geocoded_at,
@@ -294,7 +291,7 @@ begin
     is_approved = excluded.is_approved,
     country_code = excluded.country_code,
     location_label = excluded.location_label,
-    mapbox_id = excluded.mapbox_id,
+    place_id = excluded.place_id,
     latitude = excluded.latitude,
     longitude = excluded.longitude,
     geocoded_at = excluded.geocoded_at,
@@ -302,7 +299,7 @@ begin
     offers_in_home = excluded.offers_in_home,
     offers_provider_location = excluded.offers_provider_location;
 
-  -- Pagination bench: listable profiles (Mapbox ids / coords reused from primary seed cities).
+  -- Pagination bench: listable profiles (place ids / coords reused from primary seed cities).
   insert into public.professional_search_profiles (
     user_id,
     is_profile_complete,
@@ -311,7 +308,7 @@ begin
     is_approved,
     country_code,
     location_label,
-    mapbox_id,
+    place_id,
     latitude,
     longitude,
     geocoded_at,
@@ -319,7 +316,7 @@ begin
     offers_in_home,
     offers_provider_location
   )
-  select u.id, true, true, true, true, 'GB', g.label, g.mapbox_id, g.lat, g.lng, now(), true, false, false
+  select u.id, true, true, true, true, 'GB', g.label, g.place_id, g.lat, g.lng, now(), true, false, false
   from public.users u
   inner join (
     values
@@ -331,7 +328,7 @@ begin
       ('local-pro-page-06@manoula.test', 'Cardiff, United Kingdom', 'dXJuOm1ieHBsYzpJdWhQ', 51.481655, -3.179193),
       ('local-pro-page-07@manoula.test', 'Leeds, United Kingdom', 'dXJuOm1ieHBsYzpZV2hQ', 53.797418, -1.543794),
       ('local-pro-page-08@manoula.test', 'London, United Kingdom', 'dXJuOm1ieHBsYzphaWhQ', 51.5073, -0.127647)
-  ) as g(email, label, mapbox_id, lat, lng) on u.email = g.email
+  ) as g(email, label, place_id, lat, lng) on u.email = g.email
   on conflict (user_id) do update
   set
     is_profile_complete = excluded.is_profile_complete,
@@ -340,7 +337,7 @@ begin
     is_approved = excluded.is_approved,
     country_code = excluded.country_code,
     location_label = excluded.location_label,
-    mapbox_id = excluded.mapbox_id,
+    place_id = excluded.place_id,
     latitude = excluded.latitude,
     longitude = excluded.longitude,
     geocoded_at = excluded.geocoded_at,
@@ -986,12 +983,12 @@ begin
     service_id,
     country_code,
     location_label,
-    mapbox_id,
+    place_id,
     latitude,
     longitude,
     geocoded_at
   )
-  select s.id, v.country_code, v.location_label, v.mapbox_id, v.latitude, v.longitude, now()
+  select s.id, v.country_code, v.location_label, v.place_id, v.latitude, v.longitude, now()
   from public.services s
   join public.users u on u.id = s.professional_id
   cross join lateral (
@@ -1055,7 +1052,7 @@ begin
     service_title,
     country_code,
     location_label,
-    mapbox_id,
+    place_id,
     latitude,
     longitude
   )
@@ -1067,7 +1064,7 @@ begin
     location_name,
     country_code,
     location_label,
-    mapbox_id,
+    place_id,
     latitude,
     longitude,
     geocoded_at
@@ -1077,7 +1074,7 @@ begin
     v.location_name,
     'GB',
     v.location_label,
-    v.mapbox_id,
+    v.place_id,
     v.latitude,
     v.longitude,
     now()
@@ -1103,7 +1100,7 @@ begin
         51.475::double precision,
         -3.172::double precision
       )
-  ) as v(user_email, service_title, location_name, location_label, mapbox_id, latitude, longitude)
+  ) as v(user_email, service_title, location_name, location_label, place_id, latitude, longitude)
   where u.email = v.user_email
     and s.title = v.service_title;
 end $$;

@@ -105,6 +105,6 @@ cat <<'EOF'
 Done.
 Next checks:
   - Verify production env vars (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
-  - Verify MAPBOX_ACCESS_TOKEN secret for location function if needed
+  - Verify GEOAPIFY_API_KEY secret for location function if needed
   - Smoke test profile edit flow in production
 EOF

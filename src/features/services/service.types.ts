@@ -7,7 +7,7 @@ export type ServiceProviderLocationInput = {
   id?: number
   locationName: string
   locationLabel: string
-  mapboxId: string
+  placeId: string
   latitude: number | null
   longitude: number | null
   geocodedAt: string | null
@@ -17,7 +17,7 @@ export type ServiceProviderLocationInput = {
 export type ServiceAreaPlaceInput = {
   id?: number
   locationLabel: string
-  mapboxId: string
+  placeId: string
   latitude: number | null
   longitude: number | null
   geocodedAt: string | null

@@ -11,14 +11,12 @@ const corsHeaders: Record<string, string> = {
 type LocationSuggestion = {
   id: string
   label: string
-  mapboxId: string
+  placeId: string
   latitude: number
   longitude: number
   countryCode: string
-  ancestorMapboxIds: string[]
+  ancestorPlaceIds: string[]
 }
-
-type LocationLookupMode = 'search' | 'profile'
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -27,81 +25,137 @@ function jsonResponse(body: unknown, status = 200): Response {
   })
 }
 
-/** Collect parent feature ids from Geocoding v6 `properties.context` (user narrower than stored coverage). */
-function extractAncestorMapboxIds(context: unknown): string[] {
-  if (typeof context !== 'object' || context === null) return []
-  const seen = new Set<string>()
-  for (const value of Object.values(context as Record<string, unknown>)) {
-    if (typeof value !== 'object' || value === null) continue
-    const mid = (value as { mapbox_id?: unknown }).mapbox_id
-    if (typeof mid === 'string' && mid.length > 0) seen.add(mid)
-  }
-  return [...seen]
+type GeoapifyAutocompleteItem = {
+  place_id?: unknown
+  lat?: unknown
+  lon?: unknown
+  formatted?: unknown
+  country_code?: unknown
+  city?: unknown
+  result_type?: unknown
 }
 
-function extractCountryCode(context: unknown): string | null {
-  if (typeof context !== 'object' || context === null) return null
-  for (const value of Object.values(context as Record<string, unknown>)) {
-    if (typeof value !== 'object' || value === null) continue
-    const countryCode = (value as { country_code?: unknown }).country_code
-    if (typeof countryCode === 'string' && countryCode.length >= 2) {
-      return countryCode.slice(0, 2).toUpperCase()
-    }
-  }
-  return null
+type GeoapifyAutocompleteResponse = {
+  results?: GeoapifyAutocompleteItem[]
 }
 
-function mapFeatureToSuggestion(feature: unknown, index: number): LocationSuggestion | null {
-  if (typeof feature !== 'object' || feature === null) return null
-  const f = feature as {
-    id?: unknown
-    geometry?: { type?: unknown; coordinates?: unknown }
-    properties?: Record<string, unknown>
-  }
-  const props = f.properties ?? {}
+type GeoapifySearchResponse = {
+  results?: { place_id?: unknown }[]
+}
 
-  const label =
-    typeof props.full_address === 'string'
-      ? props.full_address
-      : typeof props.name_preferred === 'string'
-        ? props.name_preferred
-        : typeof props.name === 'string'
-          ? props.name
-          : null
+function parseCountryCode(raw: unknown): string | null {
+  if (typeof raw !== 'string' || raw.length < 2) return null
+  return raw.slice(0, 2).toUpperCase()
+}
 
-  if (!label) return null
-
-  const mapboxId =
-    f.id !== undefined && f.id !== null
-      ? String(f.id)
-      : typeof props.mapbox_id === 'string'
-        ? props.mapbox_id
-        : null
-
-  if (!mapboxId) return null
-
-  const id = mapboxId.length > 0 ? mapboxId : `suggestion-${index}`
-
-  const coords = f.geometry?.coordinates
-  if (!Array.isArray(coords) || coords.length < 2) return null
-  const lon = coords[0]
-  const lat = coords[1]
-  if (typeof lat !== 'number' || typeof lon !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+async function fetchCityPlaceId(city: string, countryCode: string, apiKey: string): Promise<string | null> {
+  const params = new URLSearchParams({
+    apiKey,
+    text: city,
+    format: 'json',
+    limit: '1',
+    type: 'city',
+    filter: `countrycode:${countryCode.toLowerCase()}`,
+  })
+  let res: Response
+  try {
+    res = await fetch(`https://api.geoapify.com/v1/geocode/search?${params.toString()}`)
+  } catch {
     return null
   }
+  if (!res.ok) return null
+  let data: GeoapifySearchResponse
+  try {
+    data = (await res.json()) as GeoapifySearchResponse
+  } catch {
+    return null
+  }
+  const first = data.results?.[0]
+  const pid = first?.place_id
+  return typeof pid === 'string' && pid.length > 0 ? pid : null
+}
 
-  const ancestorMapboxIds = extractAncestorMapboxIds(props.context)
-  const countryCode = extractCountryCode(props.context)
+const cityCountryKey = (city: string, cc: string) => `${city.toLowerCase()}\t${cc}`
+
+/** Resolve city-level Geoapify place_id once per distinct (city, country) for ancestor matching. */
+async function enrichAncestorPlaceIds(
+  items: GeoapifyAutocompleteItem[],
+  apiKey: string,
+): Promise<string[][]> {
+  const ancestorLists: string[][] = items.map(() => [])
+  const indicesByKey = new Map<string, number[]>()
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    const mainId = typeof item.place_id === 'string' ? item.place_id.trim() : ''
+    const city = typeof item.city === 'string' ? item.city.trim() : ''
+    const cc = parseCountryCode(item.country_code)
+    const rt = typeof item.result_type === 'string' ? item.result_type : ''
+    if (!mainId || !city || !cc) continue
+    if (rt === 'city' || rt === 'country' || rt === 'state') continue
+    const k = cityCountryKey(city, cc)
+    const arr = indicesByKey.get(k) ?? []
+    arr.push(i)
+    indicesByKey.set(k, arr)
+  }
+
+  const resolved = new Map<string, string | null>()
+  await Promise.all(
+    [...indicesByKey.entries()].map(async ([k, indices]) => {
+      const first = items[indices[0]]
+      const city = typeof first?.city === 'string' ? first.city.trim() : ''
+      const cc = parseCountryCode(first?.country_code)
+      if (!city || !cc) return
+      const pid = await fetchCityPlaceId(city, cc, apiKey)
+      resolved.set(k, pid)
+    }),
+  )
+
+  for (const [k, indices] of indicesByKey) {
+    const cityPid = resolved.get(k) ?? null
+    for (const idx of indices) {
+      const item = items[idx]
+      const mainId = typeof item.place_id === 'string' ? item.place_id.trim() : ''
+      if (cityPid && cityPid !== mainId) ancestorLists[idx] = [cityPid]
+    }
+  }
+  return ancestorLists
+}
+
+function mapItemToSuggestion(
+  item: GeoapifyAutocompleteItem,
+  index: number,
+  ancestorPlaceIds: string[],
+): LocationSuggestion | null {
+  const placeId = typeof item.place_id === 'string' ? item.place_id.trim() : ''
+  if (!placeId) return null
+
+  const label =
+    typeof item.formatted === 'string' && item.formatted.trim() !== ''
+      ? item.formatted.trim()
+      : typeof item.city === 'string' && item.city.trim() !== ''
+        ? item.city.trim()
+        : null
+  if (!label) return null
+
+  const latRaw = item.lat
+  const lonRaw = item.lon
+  const lat = typeof latRaw === 'number' ? latRaw : typeof latRaw === 'string' ? Number(latRaw) : NaN
+  const lon = typeof lonRaw === 'number' ? lonRaw : typeof lonRaw === 'string' ? Number(lonRaw) : NaN
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null
+
+  const countryCode = parseCountryCode(item.country_code)
   if (!countryCode) return null
+
+  const id = placeId.length > 0 ? placeId : `suggestion-${index}`
 
   return {
     id,
     label,
-    mapboxId,
+    placeId,
     latitude: lat,
     longitude: lon,
     countryCode,
-    ancestorMapboxIds,
+    ancestorPlaceIds,
   }
 }
 
@@ -143,9 +197,6 @@ Deno.serve(async (req) => {
 
   const rawQuery = typeof (body as { query?: unknown }).query === 'string' ? (body as { query: string }).query : ''
   const query = rawQuery.trim()
-  const rawMode = (body as { mode?: unknown }).mode
-  const mode: LocationLookupMode = rawMode === 'profile' ? 'profile' : 'search'
-
   if (query.length === 0 || query.length < 3) {
     return jsonResponse({ suggestions: [] })
   }
@@ -158,48 +209,55 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Query too long' }, 400)
   }
 
-  const mapboxToken = Deno.env.get('MAPBOX_ACCESS_TOKEN')
-  if (!mapboxToken) {
+  const geoapifyKey = Deno.env.get('GEOAPIFY_API_KEY')
+  if (!geoapifyKey) {
     return jsonResponse({ error: 'Server configuration error' }, 500)
   }
 
   const params = new URLSearchParams({
-    q: query,
+    text: query,
     limit: '5',
-    access_token: mapboxToken,
+    format: 'json',
+    apiKey: geoapifyKey,
   })
-  if (mode === 'profile') {
-    params.set('permanent', 'true')
-  }
+  // Prefer UK results first (ISO alpha-2 `gb`); Geoapify still returns other countries after the biased set.
+  // See https://apidocs.geoapify.com/docs/geocoding/forward-geocoding/#api — Location Bias → countrycode.
+  params.set('bias', 'countrycode:gb')
 
-  const mapboxUrl = `https://api.mapbox.com/search/geocode/v6/forward?${params.toString()}`
+  const autocompleteUrl = `https://api.geoapify.com/v1/geocode/autocomplete?${params.toString()}`
 
-  let mapboxRes: Response
+  let geoRes: Response
   try {
-    mapboxRes = await fetch(mapboxUrl)
+    geoRes = await fetch(autocompleteUrl)
   } catch {
     return jsonResponse({ error: 'Geocoding request failed' }, 502)
   }
 
-  if (!mapboxRes.ok) {
+  if (!geoRes.ok) {
     return jsonResponse({ error: 'Geocoding request failed' }, 502)
   }
 
   let geo: unknown
   try {
-    geo = await mapboxRes.json()
+    geo = await geoRes.json()
   } catch {
     return jsonResponse({ error: 'Invalid geocoding response' }, 502)
   }
 
-  const features =
-    typeof geo === 'object' && geo !== null && 'features' in geo && Array.isArray((geo as { features: unknown }).features)
-      ? (geo as { features: unknown[] }).features
-      : []
+  const parsed = geo as GeoapifyAutocompleteResponse
+  const rawItems = Array.isArray(parsed.results) ? parsed.results.slice(0, 5) : []
 
-  const suggestions = features
-    .slice(0, 5)
-    .map((feature, index) => mapFeatureToSuggestion(feature, index))
+  let ancestorLists: string[][] = rawItems.map(() => [])
+  if (rawItems.length > 0) {
+    try {
+      ancestorLists = await enrichAncestorPlaceIds(rawItems, geoapifyKey)
+    } catch {
+      ancestorLists = rawItems.map(() => [])
+    }
+  }
+
+  const suggestions = rawItems
+    .map((item, index) => mapItemToSuggestion(item, index, ancestorLists[index] ?? []))
     .filter((s): s is LocationSuggestion => s !== null)
 
   return jsonResponse({ suggestions })

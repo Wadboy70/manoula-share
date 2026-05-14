@@ -35,7 +35,7 @@ function createProviderLocationDraft(): ServiceProviderLocationInput {
   return {
     locationName: '',
     locationLabel: '',
-    mapboxId: '',
+    placeId: '',
     latitude: null,
     longitude: null,
     geocodedAt: null,
@@ -46,7 +46,7 @@ function createProviderLocationDraft(): ServiceProviderLocationInput {
 function createAreaPlaceDraft(): ServiceAreaPlaceInput {
   return {
     locationLabel: '',
-    mapboxId: '',
+    placeId: '',
     latitude: null,
     longitude: null,
     geocodedAt: null,
@@ -479,7 +479,7 @@ export function DashboardServicesPage() {
                               ? {
                                   ...row,
                                   locationLabel: next,
-                                  mapboxId: '',
+                                  placeId: '',
                                   latitude: null,
                                   longitude: null,
                                   geocodedAt: null,
@@ -496,9 +496,10 @@ export function DashboardServicesPage() {
                               ? {
                                   ...row,
                                   locationLabel: suggestion.label,
-                                  mapboxId: suggestion.mapboxId,
+                                  placeId: suggestion.placeId,
                                   latitude: suggestion.latitude,
                                   longitude: suggestion.longitude,
+                                  countryCode: suggestion.countryCode,
                                   geocodedAt: new Date().toISOString(),
                                 }
                               : row,
@@ -616,7 +617,7 @@ export function DashboardServicesPage() {
                               ? {
                                   ...row,
                                   locationLabel: next,
-                                  mapboxId: '',
+                                  placeId: '',
                                   latitude: null,
                                   longitude: null,
                                   geocodedAt: null,
@@ -633,9 +634,10 @@ export function DashboardServicesPage() {
                               ? {
                                   ...row,
                                   locationLabel: suggestion.label,
-                                  mapboxId: suggestion.mapboxId,
+                                  placeId: suggestion.placeId,
                                   latitude: suggestion.latitude,
                                   longitude: suggestion.longitude,
+                                  countryCode: suggestion.countryCode,
                                   geocodedAt: new Date().toISOString(),
                                 }
                               : row,

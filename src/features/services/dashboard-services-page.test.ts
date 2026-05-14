@@ -12,7 +12,7 @@ describe('applyDeliveryModeChangeWithConfirmation', () => {
         {
           locationName: 'Clinic A',
           locationLabel: 'London',
-          mapboxId: 'mbx',
+          placeId: 'mbx',
           latitude: 1,
           longitude: 2,
           geocodedAt: new Date().toISOString(),
@@ -34,7 +34,7 @@ describe('applyDeliveryModeChangeWithConfirmation', () => {
         {
           locationName: 'Clinic A',
           locationLabel: 'London',
-          mapboxId: 'mbx',
+          placeId: 'mbx',
           latitude: 1,
           longitude: 2,
           geocodedAt: new Date().toISOString(),
