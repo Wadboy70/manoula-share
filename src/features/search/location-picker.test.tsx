@@ -108,4 +108,46 @@ describe('LocationPicker', () => {
 
     expect(onValueChange).not.toHaveBeenCalled()
   })
+
+  it('hides suggestions immediately when input is cleared', async () => {
+    fetchLocationSuggestionsMock.mockResolvedValue([
+      {
+        id: 'london-1',
+        label: 'London, UK',
+        placeId: 'place.1',
+        latitude: 51.5074,
+        longitude: -0.1278,
+        countryCode: 'GB',
+        ancestorPlaceIds: [],
+      },
+    ])
+
+    function Controlled() {
+      const [value, setValue] = useState('')
+      return (
+        <LocationPicker
+          id="search-location"
+          label="Location"
+          mode="search"
+          value={value}
+          onValueChange={setValue}
+          onSuggestionSelected={vi.fn()}
+        />
+      )
+    }
+
+    render(<Controlled />)
+
+    fireEvent.change(screen.getByLabelText(/location/i), { target: { value: 'Lond' } })
+    await act(async () => {
+      vi.advanceTimersByTime(350)
+      await Promise.resolve()
+    })
+
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText(/location/i), { target: { value: '' } })
+
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
 })

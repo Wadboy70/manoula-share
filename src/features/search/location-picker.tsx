@@ -44,8 +44,14 @@ export function LocationPicker(props: LocationPickerProps) {
   const requestIdRef = useRef(0)
 
   useEffect(() => {
+    const trimmed = value.trim()
+    if (trimmed.length < LOCATION_SUGGESTION_MIN_QUERY_LENGTH) {
+      requestIdRef.current += 1
+      setDebouncedQuery(trimmed)
+      return
+    }
     const handle = window.setTimeout(() => {
-      setDebouncedQuery(value.trim())
+      setDebouncedQuery(trimmed)
     }, LOCATION_DEBOUNCE_MS)
     return () => window.clearTimeout(handle)
   }, [value])
