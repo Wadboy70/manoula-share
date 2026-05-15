@@ -258,6 +258,7 @@ export type Database = {
       }
       service_area_places: {
         Row: {
+          ancestor_place_ids: string[]
           country_code: string
           created_at: string
           geocoded_at: string | null
@@ -269,6 +270,7 @@ export type Database = {
           service_id: number
         }
         Insert: {
+          ancestor_place_ids?: string[]
           country_code?: string
           created_at?: string
           geocoded_at?: string | null
@@ -280,6 +282,7 @@ export type Database = {
           service_id: number
         }
         Update: {
+          ancestor_place_ids?: string[]
           country_code?: string
           created_at?: string
           geocoded_at?: string | null
@@ -302,6 +305,7 @@ export type Database = {
       }
       service_provider_locations: {
         Row: {
+          ancestor_place_ids: string[]
           country_code: string
           created_at: string
           geocoded_at: string | null
@@ -314,6 +318,7 @@ export type Database = {
           service_id: number
         }
         Insert: {
+          ancestor_place_ids?: string[]
           country_code?: string
           created_at?: string
           geocoded_at?: string | null
@@ -326,6 +331,7 @@ export type Database = {
           service_id: number
         }
         Update: {
+          ancestor_place_ids?: string[]
           country_code?: string
           created_at?: string
           geocoded_at?: string | null

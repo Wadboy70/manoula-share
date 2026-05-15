@@ -35,6 +35,25 @@ describe('sanitizeServiceDraft', () => {
     expect(sanitized.currencyCode).toBe('GBP')
     expect(sanitized.serviceAreaText).toBe('area text')
   })
+
+  it('dedupes and caps ancestor place ids on provider locations', () => {
+    const draft = makeDraft()
+    draft.deliveryMode = 'provider_location'
+    draft.providerLocations = [
+      {
+        locationName: 'Clinic',
+        locationLabel: 'Somewhere',
+        placeId: 'leaf',
+        ancestorPlaceIds: ['dup', ' dup ', 'dup', 'x'],
+        latitude: 1,
+        longitude: 2,
+        geocodedAt: null,
+        countryCode: 'gb',
+      },
+    ]
+    const sanitized = sanitizeServiceDraft(draft)
+    expect(sanitized.providerLocations[0]?.ancestorPlaceIds).toEqual(['dup', 'x'])
+  })
 })
 
 describe('GBP price helpers', () => {

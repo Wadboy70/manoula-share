@@ -44,11 +44,11 @@ Provider-controlled visit places for `delivery_mode = provider_location` service
 
 Key fields:
 - FK: `service_id`
-- Place data: `location_name`, `location_label`, `place_id`, `latitude`, `longitude`, `geocoded_at`, `country_code`
+- Place data: `location_name`, `location_label`, `place_id`, `ancestor_place_ids` (Geoapify parent ids for hierarchical search), `latitude`, `longitude`, `geocoded_at`, `country_code`
 
 Reasoning:
 - Naming and geocoded place data live at the row level so one service can support multiple provider locations.
-- Keeping this separate avoids bloating `services` with repeated location columns.
+- `ancestor_place_ids` lets a user search a parent area (e.g. city) while the stored row uses a more specific `place_id`.
 
 ## `service_area_places`
 
@@ -56,11 +56,11 @@ Geoapify-backed explicit coverage rows for place-list service areas.
 
 Key fields:
 - FK: `service_id`
-- Place data: `location_label`, `place_id`, `latitude`, `longitude`, `geocoded_at`, `country_code`
+- Place data: `location_label`, `place_id`, `ancestor_place_ids`, `latitude`, `longitude`, `geocoded_at`, `country_code`
 
 Reasoning:
 - Used when service coverage is enumerated by places rather than radius.
-- Preserves canonical place IDs for stable location matching.
+- Preserves canonical place IDs for stable location matching; ancestors support parent-area search (same model as `service_provider_locations`).
 
 ## `professional_specialties` and `specialties`
 

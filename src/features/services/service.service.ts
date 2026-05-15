@@ -57,11 +57,13 @@ async function fetchProfessionalIdForSession(): Promise<ServiceResult<number>> {
 function mapProviderLocationRowToInput(
   row: TablesInsert<'service_provider_locations'> & { id: number },
 ): ServiceProviderLocationInput {
+  const ancestors = row.ancestor_place_ids
   return {
     id: row.id,
     locationName: row.location_name ?? '',
     locationLabel: row.location_label ?? '',
     placeId: row.place_id ?? '',
+    ancestorPlaceIds: Array.isArray(ancestors) ? [...ancestors] : [],
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
     geocodedAt: row.geocoded_at ?? null,
@@ -72,10 +74,12 @@ function mapProviderLocationRowToInput(
 function mapAreaPlaceRowToInput(
   row: TablesInsert<'service_area_places'> & { id: number },
 ): ServiceAreaPlaceInput {
+  const ancestors = row.ancestor_place_ids
   return {
     id: row.id,
     locationLabel: row.location_label ?? '',
     placeId: row.place_id ?? '',
+    ancestorPlaceIds: Array.isArray(ancestors) ? [...ancestors] : [],
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
     geocodedAt: row.geocoded_at ?? null,
@@ -151,13 +155,13 @@ export async function fetchServicesEditorData(): Promise<ServiceResult<ServicesE
           supabase
             .from('service_provider_locations')
             .select(
-              'id,service_id,location_name,location_label,place_id,latitude,longitude,geocoded_at,country_code',
+              'id,service_id,location_name,location_label,place_id,ancestor_place_ids,latitude,longitude,geocoded_at,country_code',
             )
             .in('service_id', serviceIds)
             .order('id', { ascending: true }),
           supabase
             .from('service_area_places')
-            .select('id,service_id,location_label,place_id,latitude,longitude,geocoded_at,country_code')
+            .select('id,service_id,location_label,place_id,ancestor_place_ids,latitude,longitude,geocoded_at,country_code')
             .in('service_id', serviceIds)
             .order('id', { ascending: true }),
         ])
@@ -222,6 +226,7 @@ async function replaceProviderLocations(serviceId: number, rows: ServiceProvider
     location_name: row.locationName || null,
     location_label: row.locationLabel || null,
     place_id: row.placeId || null,
+    ancestor_place_ids: row.ancestorPlaceIds.length > 0 ? row.ancestorPlaceIds : [],
     latitude: row.latitude,
     longitude: row.longitude,
     geocoded_at: row.geocodedAt,
@@ -240,6 +245,7 @@ async function replaceAreaPlaces(serviceId: number, rows: ServiceAreaPlaceInput[
     service_id: serviceId,
     location_label: row.locationLabel || null,
     place_id: row.placeId || null,
+    ancestor_place_ids: row.ancestorPlaceIds.length > 0 ? row.ancestorPlaceIds : [],
     latitude: row.latitude,
     longitude: row.longitude,
     geocoded_at: row.geocodedAt,

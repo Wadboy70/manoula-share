@@ -8,6 +8,8 @@ export type ServiceProviderLocationInput = {
   locationName: string
   locationLabel: string
   placeId: string
+  /** Geoapify place ids from parent admin levels (city, region, …) for hierarchical search matching. */
+  ancestorPlaceIds: string[]
   latitude: number | null
   longitude: number | null
   geocodedAt: string | null
@@ -18,6 +20,7 @@ export type ServiceAreaPlaceInput = {
   id?: number
   locationLabel: string
   placeId: string
+  ancestorPlaceIds: string[]
   latitude: number | null
   longitude: number | null
   geocodedAt: string | null

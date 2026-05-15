@@ -10,6 +10,8 @@ export const SERVICE_LIMITS = {
   placeIdMax: 2048,
   locationNameMax: 160,
   maxLocationsPerService: 25,
+  /** Max Geoapify ancestor ids stored per location row (defensive cap). */
+  maxAncestorPlaceIdsPerRow: 48,
 } as const
 
 const GBP_PRICE_REGEX = /^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/
@@ -27,12 +29,28 @@ export function normalizePlainText(value: string, maxLength: number): string {
   return collapseWhitespace(stripped).slice(0, maxLength)
 }
 
+function normalizeAncestorPlaceIdList(raw: string[] | undefined): string[] {
+  if (!Array.isArray(raw) || raw.length === 0) return []
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const item of raw) {
+    if (typeof item !== 'string') continue
+    const id = normalizePlainText(item, SERVICE_LIMITS.placeIdMax)
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    out.push(id)
+    if (out.length >= SERVICE_LIMITS.maxAncestorPlaceIdsPerRow) break
+  }
+  return out
+}
+
 function normalizeLocation(input: ServiceProviderLocationInput): ServiceProviderLocationInput {
   return {
     ...input,
     locationName: normalizePlainText(input.locationName, SERVICE_LIMITS.locationNameMax),
     locationLabel: normalizePlainText(input.locationLabel, SERVICE_LIMITS.locationLabelMax),
     placeId: normalizePlainText(input.placeId, SERVICE_LIMITS.placeIdMax),
+    ancestorPlaceIds: normalizeAncestorPlaceIdList(input.ancestorPlaceIds),
     countryCode: normalizePlainText(input.countryCode, SERVICE_LIMITS.currencyCodeLen).toUpperCase(),
   }
 }
@@ -42,6 +60,7 @@ function normalizeAreaPlace(input: ServiceAreaPlaceInput): ServiceAreaPlaceInput
     ...input,
     locationLabel: normalizePlainText(input.locationLabel, SERVICE_LIMITS.locationLabelMax),
     placeId: normalizePlainText(input.placeId, SERVICE_LIMITS.placeIdMax),
+    ancestorPlaceIds: normalizeAncestorPlaceIdList(input.ancestorPlaceIds),
     countryCode: normalizePlainText(input.countryCode, SERVICE_LIMITS.currencyCodeLen).toUpperCase(),
   }
 }
