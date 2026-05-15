@@ -58,6 +58,7 @@ export function SearchProviderCard({ card, className }: SearchProviderCardProps)
   const displayName = renderSearchCardName(card)
   const nameId = `search-card-name-${card.professionalId}`
   const profileHref = `/professionals/${card.professionalId}`
+  const bookConsultHref = `/messages/start/${card.professionalId}`
   const specialtyLine = specialtyDisplayLine(card)
   const services = dedupeServicesById(card.services)
 
@@ -149,7 +150,7 @@ export function SearchProviderCard({ card, className }: SearchProviderCardProps)
 
       <div className="mt-auto flex flex-col gap-3 pt-5 sm:flex-row">
         <Link
-          to={profileHref}
+          to={bookConsultHref}
           className={cn(
             buttonVariants({ variant: 'default', size: 'default' }),
             'inline-flex flex-1 items-center justify-center no-underline',

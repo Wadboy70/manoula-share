@@ -158,7 +158,7 @@ describe('SearchPage', () => {
     const viewLink = within(article).getByRole('link', { name: /^view profile$/i })
     expect(viewLink).toHaveAttribute('href', '/professionals/1')
     const bookLink = within(article).getByRole('link', { name: /^book consultation$/i })
-    expect(bookLink).toHaveAttribute('href', '/professionals/1')
+    expect(bookLink).toHaveAttribute('href', '/messages/start/1')
   })
 
   it('passes delivery mode to useSearchResults when a mode is selected', async () => {

@@ -78,6 +78,16 @@ export function AuthNavActions({
       )
     ) : null
 
+  const messagesLink = session ? (
+    <Link
+      to="/messages"
+      className={outlineLinkClass}
+      onClick={() => afterNav(onAfterNavigate)}
+    >
+      Messages
+    </Link>
+  ) : null
+
   if (session) {
     const logoutButton = (
       <Button
@@ -97,6 +107,7 @@ export function AuthNavActions({
     if (isSheet) {
       return (
         <div className="flex flex-col gap-3 px-4 pb-6">
+          {messagesLink}
           {professionalCta}
           {logoutButton}
         </div>
@@ -105,6 +116,9 @@ export function AuthNavActions({
 
     return (
       <div className="flex w-full max-w-lg flex-col gap-2 sm:mx-auto">
+        {messagesLink ? (
+          <div className="flex min-h-11 w-full items-stretch">{messagesLink}</div>
+        ) : null}
         {professionalCta ? (
           <div className="flex min-h-11 w-full items-stretch">{professionalCta}</div>
         ) : null}

@@ -17,6 +17,10 @@ import { ForgotPasswordPage } from '@/pages/forgot-password-page'
 import { HomePage } from '@/pages/home-page'
 import { ResetPasswordPage } from '@/pages/reset-password-page'
 import { ProfessionalPage } from '@/pages/professional-page'
+import { MessagingIndexRoute } from '@/features/messaging/messaging-index-route'
+import { MessagingLayout } from '@/features/messaging/messaging-layout'
+import { MessagingStartRoute } from '@/features/messaging/messaging-start-route'
+import { MessagingThreadRoute } from '@/features/messaging/messaging-thread-route'
 import { SearchPage } from '@/pages/search-page'
 import { SignInPage } from '@/pages/sign-in-page'
 import { SignUpPage } from '@/pages/sign-up-page'
@@ -41,6 +45,18 @@ export const appRouteObjects = createRoutesFromElements(
         </ProtectedRoute>
       }
     />
+    <Route
+      path="messages"
+      element={
+        <ProtectedRoute>
+          <MessagingLayout />
+        </ProtectedRoute>
+      }
+    >
+      <Route index element={<MessagingIndexRoute />} />
+      <Route path="start/:professionalId" element={<MessagingStartRoute />} />
+      <Route path=":conversationId" element={<MessagingThreadRoute />} />
+    </Route>
     <Route
       path="dashboard"
       element={

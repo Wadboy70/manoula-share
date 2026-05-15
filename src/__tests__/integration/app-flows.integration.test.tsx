@@ -53,6 +53,9 @@ type IntegrationSupabaseClient = {
     onAuthStateChange: ReturnType<typeof vi.fn>
   }
   from: ReturnType<typeof vi.fn>
+  rpc: ReturnType<typeof vi.fn>
+  channel: ReturnType<typeof vi.fn>
+  removeChannel: ReturnType<typeof vi.fn>
   functions: { invoke: ReturnType<typeof vi.fn> }
   storage: { from: ReturnType<typeof vi.fn> }
   emitAuthStateChange: (event: string, nextSession: Session | null) => void
@@ -106,6 +109,17 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
       }),
     },
     from: vi.fn(),
+    rpc: vi.fn(async (fn: string) => {
+      if (fn === 'ensure_messaging_conversation') {
+        return { data: 100, error: null }
+      }
+      return { data: null, error: { message: `unknown rpc ${fn}` } }
+    }),
+    channel: vi.fn(() => ({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn(() => 'mock-realtime'),
+    })),
+    removeChannel: vi.fn(),
     functions: { invoke: vi.fn() },
     storage: { from: vi.fn() },
     emitAuthStateChange,
@@ -355,6 +369,39 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
         }),
       }
     }
+    if (table === 'conversations') {
+      return {
+        select: vi.fn(() => ({
+          order: vi.fn(async () => ({ data: [], error: null })),
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn(async () => ({ data: null, error: null })),
+          })),
+        })),
+      }
+    }
+    if (table === 'messages') {
+      return {
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            order: vi.fn(async () => ({ data: [], error: null })),
+          })),
+        })),
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single: vi.fn(async () => ({
+              data: {
+                id: 1,
+                conversation_id: 1,
+                sender_id: 1,
+                body: 'hello',
+                created_at: new Date().toISOString(),
+              },
+              error: null,
+            })),
+          })),
+        })),
+      }
+    }
     throw new Error(`integration mock: unexpected table "${table}"`)
   })
 
@@ -497,6 +544,20 @@ describe('integration: routing and search', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /^find support$/i })).toBeInTheDocument()
     })
+  })
+
+  it('renders messages inbox for signed-in client', async () => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ is_professional: false })
+    mockSb.store.profileRow = null
+
+    renderWithApp(['/messages'])
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^messages$/i })).toBeInTheDocument()
+    })
+    expect(await screen.findByText(/no conversations yet/i)).toBeInTheDocument()
   })
 
   it('redirects non-professionals away from /dashboard to /search', async () => {

@@ -34,6 +34,153 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          client_id: number
+          created_at: string
+          id: number
+          professional_id: number
+          service_id: number
+          status: Database["public"]["Enums"]["booking_status"]
+          updated_at: string
+        }
+        Insert: {
+          client_id: number
+          created_at?: string
+          id?: never
+          professional_id: number
+          service_id: number
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+        }
+        Update: {
+          client_id?: number
+          created_at?: string
+          id?: never
+          professional_id?: number
+          service_id?: number
+          status?: Database["public"]["Enums"]["booking_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "professional_search_cards_enriched"
+            referencedColumns: ["professional_id"]
+          },
+          {
+            foreignKeyName: "bookings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_search_cards_enriched"
+            referencedColumns: ["professional_id"]
+          },
+          {
+            foreignKeyName: "bookings_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          booking_id: number
+          created_at: string
+          id: number
+          last_activity_at: string
+          last_message_at: string | null
+          last_message_preview: string | null
+        }
+        Insert: {
+          booking_id: number
+          created_at?: string
+          id?: never
+          last_activity_at?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+        }
+        Update: {
+          booking_id?: number
+          created_at?: string
+          id?: never
+          last_activity_at?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          conversation_id: number
+          created_at: string
+          id: number
+          sender_id: number
+        }
+        Insert: {
+          body: string
+          conversation_id: number
+          created_at?: string
+          id?: never
+          sender_id: number
+        }
+        Update: {
+          body?: string
+          conversation_id?: number
+          created_at?: string
+          id?: never
+          sender_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "professional_search_cards_enriched"
+            referencedColumns: ["professional_id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       professional_credentials: {
         Row: {
           created_at: string
@@ -41,7 +188,7 @@ export type Database = {
           credential_type: string
           expires_at: string | null
           id: number
-          issuing_body: string | null
+          issuing_body: string
           professional_id: number
           registration_number: string | null
           verification_status: string
@@ -53,7 +200,7 @@ export type Database = {
           credential_type: string
           expires_at?: string | null
           id?: number
-          issuing_body?: string | null
+          issuing_body: string
           professional_id: number
           registration_number?: string | null
           verification_status?: string
@@ -65,7 +212,7 @@ export type Database = {
           credential_type?: string
           expires_at?: string | null
           id?: number
-          issuing_body?: string | null
+          issuing_body?: string
           professional_id?: number
           registration_number?: string | null
           verification_status?: string
@@ -99,10 +246,10 @@ export type Database = {
           latitude: number | null
           location_label: string | null
           longitude: number | null
-          place_id: string | null
           offers_in_home: boolean
           offers_provider_location: boolean
           offers_remote: boolean
+          place_id: string | null
           rating_avg: number | null
           rating_count: number
           user_id: number
@@ -117,10 +264,10 @@ export type Database = {
           latitude?: number | null
           location_label?: string | null
           longitude?: number | null
-          place_id?: string | null
           offers_in_home?: boolean
           offers_provider_location?: boolean
           offers_remote?: boolean
+          place_id?: string | null
           rating_avg?: number | null
           rating_count?: number
           user_id: number
@@ -135,10 +282,10 @@ export type Database = {
           latitude?: number | null
           location_label?: string | null
           longitude?: number | null
-          place_id?: string | null
           offers_in_home?: boolean
           offers_provider_location?: boolean
           offers_remote?: boolean
+          place_id?: string | null
           rating_avg?: number | null
           rating_count?: number
           user_id?: number
@@ -519,46 +666,50 @@ export type Database = {
     }
     Functions: {
       app_user_id_for_auth: { Args: never; Returns: number }
+      ensure_messaging_conversation: {
+        Args: { p_professional_id: number; p_service_id: number }
+        Returns: number
+      }
       is_professional_publicly_listable: {
         Args: { pro_id: number }
         Returns: boolean
       }
+      professional_search_profiles_refresh_ratings_for_professional: {
+        Args: { p_professional_id: number }
+        Returns: undefined
+      }
       search_haversine_km: {
-        Args: {
-          lat1: number
-          lon1: number
-          lat2: number
-          lon2: number
-        }
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
       }
       search_professional_cards_page: {
         Args: {
-          p_return_cap: number
+          p_after_professional_id: number
+          p_after_sort_score: number
+          p_delivery_mode: string
+          p_location: Json
           p_probe_rows: number
-          p_after_sort_score: number | null
-          p_after_professional_id: number | null
-          p_specialty_label: string | null
-          p_delivery_mode: string | null
-          p_location: Json | null
+          p_return_cap: number
+          p_specialty_label: string
         }
         Returns: Json
       }
       search_service_matches_location: {
         Args: {
+          p_ancestor_place_ids: string[]
+          p_profile_lat: number
+          p_profile_lng: number
           p_service_id: number
-          p_user_place_id: string
           p_user_lat: number
           p_user_lng: number
-          p_ancestor_place_ids: string[]
-          p_profile_lat: number | null
-          p_profile_lng: number | null
+          p_user_place_id: string
         }
         Returns: boolean
       }
+      upsert_professional_profile: { Args: { p_payload: Json }; Returns: Json }
     }
     Enums: {
-      [_ in never]: never
+      booking_status: "pending" | "accepted" | "declined" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -688,7 +839,9 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      booking_status: ["pending", "accepted", "declined", "completed"],
+    },
   },
 } as const
 
