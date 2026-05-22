@@ -105,6 +105,43 @@ describe('SignInPage', () => {
     expect(loadAppUserMock).toHaveBeenCalledOnce()
   })
 
+  it('shows a friendly message when sign in fails with a network error', async () => {
+    signInWithPasswordMock.mockResolvedValue({
+      data: { user: null },
+      error: { message: 'Failed to fetch' },
+    })
+    const user = userEvent.setup()
+    renderSignIn()
+
+    await user.type(screen.getByLabelText(/^email$/i), 'jane@example.com')
+    await user.type(screen.getByLabelText(/^password$/i), 'password12')
+    await user.click(screen.getByRole('button', { name: /^sign in$/i }))
+
+    expect(
+      await screen.findByText(
+        /couldn't connect.*check your internet connection/i,
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/failed to fetch/i)).not.toBeInTheDocument()
+  })
+
+  it('shows a friendly message for invalid credentials', async () => {
+    signInWithPasswordMock.mockResolvedValue({
+      data: { user: null },
+      error: { message: 'Invalid login credentials' },
+    })
+    const user = userEvent.setup()
+    renderSignIn()
+
+    await user.type(screen.getByLabelText(/^email$/i), 'jane@example.com')
+    await user.type(screen.getByLabelText(/^password$/i), 'wrong-password')
+    await user.click(screen.getByRole('button', { name: /^sign in$/i }))
+
+    expect(
+      await screen.findByText(/incorrect email or password/i),
+    ).toBeInTheDocument()
+  })
+
   it('redirects professionals to /dashboard on successful sign in', async () => {
     loadAppUserMock.mockResolvedValue({
       ...baseAppUser(),

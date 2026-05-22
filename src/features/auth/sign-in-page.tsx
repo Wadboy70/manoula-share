@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/features/auth'
+import { getSignInErrorMessage } from '@/features/auth/auth-errors'
 import { supabase } from '@/lib/supabaseClient'
 import { cn } from '@/lib/utils'
 
@@ -51,49 +52,46 @@ export function SignInPage() {
     if (Object.keys(nextErrors).length > 0) return
 
     setLoading(true)
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    })
-    setLoading(false)
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
 
-    if (error) {
-      const message = error.message.toLowerCase()
-      if (message.includes('email not confirmed')) {
+      if (error) {
+        setErrors({ form: getSignInErrorMessage(error) })
+        return
+      }
+
+      if (!data.user) {
         setErrors({
-          form: 'Please verify your email before signing in.',
+          form: 'Unable to load your account. Please try again.',
         })
         return
       }
 
-      setErrors({
-        form: error.message || 'Unable to sign in right now. Please try again.',
-      })
-      return
-    }
+      const appUser = await loadAppUser(data.user, true)
+      if (!appUser) {
+        setErrors({
+          form: 'Your account needs attention. Please contact support.',
+        })
+        return
+      }
 
-    if (!data.user) {
-      setErrors({
-        form: 'Unable to load your account. Please try again.',
-      })
-      return
-    }
+      const fromPath = (location.state as { from?: string } | null)?.from
+      if (fromPath) {
+        navigate(fromPath, { replace: true })
+        return
+      }
 
-    const appUser = await loadAppUser(data.user, true)
-    if (!appUser) {
-      setErrors({
-        form: 'Your account needs attention. Please contact support.',
-      })
-      return
+      navigate(appUser.is_professional ? '/dashboard' : '/search', { replace: true })
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : undefined
+      setErrors({ form: getSignInErrorMessage({ message }) })
+    } finally {
+      setLoading(false)
     }
-
-    const fromPath = (location.state as { from?: string } | null)?.from
-    if (fromPath) {
-      navigate(fromPath, { replace: true })
-      return
-    }
-
-    navigate(appUser.is_professional ? '/dashboard' : '/search', { replace: true })
   }
 
   return (
