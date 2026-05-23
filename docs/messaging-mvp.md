@@ -26,8 +26,14 @@
 
 - After applying migrations to a linked Supabase project, run **`supabase db push`** (or your deployment pipeline) and regenerate **`src/types/database.ts`** (`supabase gen types typescript --linked`).
 
-## TODO(booking): integrating real booking flows
+## Booking management (MVP)
 
-- **Status transitions**: add narrow `UPDATE` policies (or RPCs) for `bookings.status` (`pending` → `accepted` | `declined`; `accepted` → `completed`; etc.) and enforce allowed transitions in a trigger or typed RPC.
-- **Richer booking rows**: follow-on migrations for `scheduled_at`, price snapshot, cancellation, etc.—conversation/booking linkage already supports attaching that data to the same `bookings.id`.
+- **Status transitions**: `update_booking_status(booking_id, status)` RPC (professional-only) with a `BEFORE UPDATE` trigger enforcing `pending` → `accepted` | `declined` and `accepted` → `completed`.
+- **UI**: `/dashboard/bookings` (professional), `/bookings` (client), dashboard overview previews, accept/decline in message thread header for pending requests.
+- **`scheduled_at`**: nullable column on `bookings` for future scheduling; not shown in UI yet.
+
+## TODO(booking): follow-ups
+
+- **Scheduling UI**: set/display `scheduled_at`, availability, reschedule/cancel flows.
+- **Richer booking rows**: price snapshot, cancellation metadata, etc.
 - **Checkout / payment**: likely triggered after messaging or from booking detail; keep using **`conversations.booking_id`** as the join key so messaging and booking UIs stay aligned.

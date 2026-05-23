@@ -88,6 +88,17 @@ export function AuthNavActions({
     </Link>
   ) : null
 
+  const bookingsLink =
+    session && appUser && !appUser.is_professional ? (
+      <Link
+        to="/bookings"
+        className={outlineLinkClass}
+        onClick={() => afterNav(onAfterNavigate)}
+      >
+        Bookings
+      </Link>
+    ) : null
+
   if (session) {
     const logoutButton = (
       <Button
@@ -108,6 +119,7 @@ export function AuthNavActions({
       return (
         <div className="flex flex-col gap-3 px-4 pb-6">
           {messagesLink}
+          {bookingsLink}
           {professionalCta}
           {logoutButton}
         </div>
@@ -118,6 +130,9 @@ export function AuthNavActions({
       <div className="flex w-full max-w-lg flex-col gap-2 sm:mx-auto">
         {messagesLink ? (
           <div className="flex min-h-11 w-full items-stretch">{messagesLink}</div>
+        ) : null}
+        {bookingsLink ? (
+          <div className="flex min-h-11 w-full items-stretch">{bookingsLink}</div>
         ) : null}
         {professionalCta ? (
           <div className="flex min-h-11 w-full items-stretch">{professionalCta}</div>

@@ -98,10 +98,19 @@ export function MessagingThreadRoute() {
     )
   }
 
+  async function refreshConversation() {
+    if (conversationId == null) return
+    const { data, error: err } = await fetchConversationById(conversationId)
+    if (err || !data) return
+    setConversation(data)
+    await reloadConversations()
+  }
+
   return (
     <MessageThreadPanel
       conversation={conversation}
       onAfterSend={() => void reloadConversations()}
+      onBookingStatusChange={refreshConversation}
       showMobileBack
     />
   )

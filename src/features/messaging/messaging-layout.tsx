@@ -1,7 +1,8 @@
 import { useCallback } from 'react'
 
-import { Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 
+import { buttonVariants } from '@/components/ui/button'
 import { useAuth } from '@/features/auth'
 
 import { ConversationList } from './conversation-list'
@@ -54,7 +55,19 @@ export function MessagingLayout() {
         id="main-content"
         className="font-body mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col px-0 py-4 sm:px-4"
       >
-        <h1 className="text-foreground px-4 font-heading text-2xl md:px-0">Messages</h1>
+        <div className="flex items-center justify-between gap-4 px-4 md:px-0">
+          <h1 className="text-foreground font-heading text-2xl">Messages</h1>
+          <Link
+            to={appUser.is_professional ? '/dashboard/bookings' : '/bookings'}
+            className={buttonVariants({
+              size: 'sm',
+              variant: 'outline',
+              className: 'rounded-none shrink-0',
+            })}
+          >
+            Bookings
+          </Link>
+        </div>
         <div className="mt-4 flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-none border border-white/10 bg-[#141414] md:rounded-lg">
           <aside
             className={

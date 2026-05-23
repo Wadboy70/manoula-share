@@ -13,6 +13,7 @@ import {
   DashboardServicesPage,
   DashboardSettingsPlaceholderPage,
 } from '@/pages/dashboard-page'
+import { DashboardBookingsPage } from '@/pages/dashboard-bookings-page'
 import { ForgotPasswordPage } from '@/pages/forgot-password-page'
 import { HomePage } from '@/pages/home-page'
 import { ResetPasswordPage } from '@/pages/reset-password-page'
@@ -21,6 +22,7 @@ import { MessagingIndexRoute } from '@/features/messaging/messaging-index-route'
 import { MessagingLayout } from '@/features/messaging/messaging-layout'
 import { MessagingStartRoute } from '@/features/messaging/messaging-start-route'
 import { MessagingThreadRoute } from '@/features/messaging/messaging-thread-route'
+import { ClientBookingsPage } from '@/pages/bookings-page'
 import { SearchPage } from '@/pages/search-page'
 import { SignInPage } from '@/pages/sign-in-page'
 import { SignUpPage } from '@/pages/sign-up-page'
@@ -46,6 +48,14 @@ export const appRouteObjects = createRoutesFromElements(
       }
     />
     <Route
+      path="bookings"
+      element={
+        <ProtectedRoute>
+          <ClientBookingsPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
       path="messages"
       element={
         <ProtectedRoute>
@@ -66,6 +76,7 @@ export const appRouteObjects = createRoutesFromElements(
       }
     >
       <Route index element={<DashboardOverviewPage />} />
+      <Route path="bookings" element={<DashboardBookingsPage />} />
       <Route path="profile" element={<DashboardProfilePage />} />
       <Route path="services" element={<DashboardServicesPage />} />
       <Route path="settings" element={<DashboardSettingsPlaceholderPage />} />

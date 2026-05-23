@@ -159,6 +159,61 @@ export function makeServiceProviderLocationRow(
   }
 }
 
+export type BookingListRowFixture = {
+  id: number
+  client_id: number
+  professional_id: number
+  service_id: number
+  status: 'pending' | 'accepted' | 'declined' | 'completed'
+  created_at: string
+  updated_at: string
+  scheduled_at: string | null
+  client: {
+    id: number
+    first_name: string | null
+    last_name: string | null
+    profile_photo_url: string | null
+  }
+  professional: {
+    id: number
+    first_name: string | null
+    last_name: string | null
+    profile_photo_url: string | null
+  }
+  services: { id: number; title: string; delivery_mode: string }
+  conversations: { id: number }
+}
+
+export function makeBookingListRow(
+  overrides: Partial<BookingListRowFixture> = {},
+): BookingListRowFixture {
+  return {
+    id: 1,
+    client_id: 2,
+    professional_id: 1,
+    service_id: 10,
+    status: 'pending',
+    created_at: ISO,
+    updated_at: ISO,
+    scheduled_at: null,
+    client: {
+      id: 2,
+      first_name: 'Alex',
+      last_name: 'Client',
+      profile_photo_url: null,
+    },
+    professional: {
+      id: 1,
+      first_name: 'Sam',
+      last_name: 'Pro',
+      profile_photo_url: null,
+    },
+    services: { id: 10, title: 'Initial consultation', delivery_mode: 'remote' },
+    conversations: { id: 100 },
+    ...overrides,
+  }
+}
+
 export function makeServiceAreaPlaceRow(overrides: Partial<ServiceAreaPlaceRow> = {}): ServiceAreaPlaceRow {
   return {
     id: 31,

@@ -18,6 +18,7 @@ import type {
 } from '@/test/integration/fixtures'
 import {
   makeAuthUser,
+  makeBookingListRow,
   makeProfessionalCredentialRow,
   makeProfessionalProfileRow,
   makeServiceAreaPlaceRow,
@@ -38,6 +39,7 @@ type IntegrationStore = {
   serviceAreaPlaceRows: ServiceAreaPlaceRow[]
   specialtyRows: { specialty_id: number }[]
   specialties: { id: number; label: string }[]
+  bookingRows: ReturnType<typeof makeBookingListRow>[]
 }
 
 type IntegrationSupabaseClient = {
@@ -80,6 +82,7 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
       { id: 2, label: 'Doula' },
       { id: 3, label: 'Therapist' },
     ],
+    bookingRows: [],
   }
 
   const emitAuthStateChange = (event: string, nextSession: Session | null) => {
@@ -109,9 +112,19 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
       }),
     },
     from: vi.fn(),
-    rpc: vi.fn(async (fn: string) => {
+    rpc: vi.fn(async (fn: string, args?: { p_booking_id?: number; p_status?: string }) => {
       if (fn === 'ensure_messaging_conversation') {
         return { data: 100, error: null }
+      }
+      if (fn === 'update_booking_status') {
+        const bookingId = args?.p_booking_id
+        const status = args?.p_status
+        const row = store.bookingRows.find((b) => b.id === bookingId)
+        if (row && status) {
+          row.status = status as typeof row.status
+          row.updated_at = new Date().toISOString()
+        }
+        return { data: null, error: null }
       }
       return { data: null, error: { message: `unknown rpc ${fn}` } }
     }),
@@ -369,6 +382,43 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
         }),
       }
     }
+    if (table === 'bookings') {
+      return {
+        select: vi.fn(() => {
+          let column: 'professional_id' | 'client_id' = 'client_id'
+          let value = 0
+          let statuses: string[] = []
+
+          const builder = {
+            eq: vi.fn((col: 'professional_id' | 'client_id', val: number) => {
+              column = col
+              value = val
+              return builder
+            }),
+            in: vi.fn((_col: string, statusList: string[]) => {
+              statuses = statusList
+              return builder
+            }),
+            order: vi.fn(() => builder),
+            then(
+              resolve: (result: { data: unknown; error: null }) => void,
+              reject?: (reason: unknown) => void,
+            ) {
+              try {
+                const filtered = store.bookingRows.filter(
+                  (b) => b[column] === value && statuses.includes(b.status),
+                )
+                resolve({ data: filtered, error: null })
+              } catch (err) {
+                reject?.(err)
+              }
+            },
+          }
+
+          return builder
+        }),
+      }
+    }
     if (table === 'conversations') {
       return {
         select: vi.fn(() => ({
@@ -499,6 +549,7 @@ describe('integration: routing and search', () => {
     mockSb.store.serviceProviderLocationRows = []
     mockSb.store.serviceAreaPlaceRows = []
     mockSb.store.specialtyRows = []
+    mockSb.store.bookingRows = []
     mockSb.resetHandlers()
     mockSb.functions.invoke.mockImplementation(async (functionName: string) => {
       if (functionName === 'location') {
@@ -558,6 +609,63 @@ describe('integration: routing and search', () => {
       expect(screen.getByRole('heading', { name: /^messages$/i })).toBeInTheDocument()
     })
     expect(await screen.findByText(/no conversations yet/i)).toBeInTheDocument()
+  })
+
+  it('shows client bookings and pending status', async () => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ id: 2, is_professional: false })
+    mockSb.store.bookingRows = [
+      makeBookingListRow({
+        id: 1,
+        client_id: 2,
+        professional_id: 1,
+        status: 'pending',
+      }),
+    ]
+
+    renderWithApp(['/bookings'])
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^my bookings$/i })).toBeInTheDocument()
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Sam Pro')).toBeInTheDocument()
+    })
+    expect(screen.getByRole('tabpanel')).toHaveTextContent('Pending')
+    expect(screen.queryByRole('button', { name: /^accept$/i })).not.toBeInTheDocument()
+  })
+
+  it('professional accepts booking from dashboard bookings page', async () => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ id: 1, is_professional: true })
+    mockSb.store.profileRow = makeProfessionalProfileRow({ user_id: 1 })
+    mockSb.store.bookingRows = [
+      makeBookingListRow({
+        id: 1,
+        client_id: 2,
+        professional_id: 1,
+        status: 'pending',
+      }),
+    ]
+
+    renderWithApp(['/dashboard/bookings'])
+    const u = userEvent.setup()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^bookings$/i })).toBeInTheDocument()
+    })
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /^accept$/i })).toBeInTheDocument()
+    })
+    await u.click(screen.getByRole('button', { name: /^accept$/i }))
+
+    await waitFor(() => {
+      expect(mockSb.store.bookingRows[0]?.status).toBe('accepted')
+    })
+    await u.click(screen.getByRole('tab', { name: /^upcoming/i }))
+    expect(screen.getByText('Alex Client')).toBeInTheDocument()
   })
 
   it('redirects non-professionals away from /dashboard to /search', async () => {
