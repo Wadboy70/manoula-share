@@ -18,7 +18,7 @@ export function ProfileIncompletePrompt({
   isComplete,
   missingItems,
   variant = 'banner',
-  ctaHref = '/dashboard/profile',
+  ctaHref = '/professional/onboarding',
   hideCta = false,
 }: ProfileIncompletePromptProps) {
   if (isComplete) return null

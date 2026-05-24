@@ -6,18 +6,22 @@ export type ProfileCompletenessInput = {
   specialtyIds: number[]
   locationLabel: string
   hasCredential: boolean
-  visibilitySet: boolean
 }
 
-const CHECKS = [
+export const PROFILE_COMPLETENESS_CHECKS = [
   { key: 'name', label: 'Add your full name' },
   { key: 'photo', label: 'Upload a profile photo' },
   { key: 'bio', label: 'Add your bio/about section' },
   { key: 'specialty', label: 'Select at least one specialty' },
   { key: 'location', label: 'Set your location' },
   { key: 'credential', label: 'Add at least one credential' },
-  { key: 'visibility', label: 'Set profile visibility' },
 ] as const
+
+export type ProfileCompletenessCheckKey = (typeof PROFILE_COMPLETENESS_CHECKS)[number]['key']
+
+export type ProfileCompletenessStatus = Record<ProfileCompletenessCheckKey, boolean>
+
+const CHECKS = PROFILE_COMPLETENESS_CHECKS
 
 export type ProfileCompleteness = {
   percentage: number
@@ -25,16 +29,19 @@ export type ProfileCompleteness = {
   missingItems: string[]
 }
 
-export function calculateProfileCompleteness(input: ProfileCompletenessInput): ProfileCompleteness {
-  const status = {
+export function getProfileCompletenessStatus(input: ProfileCompletenessInput): ProfileCompletenessStatus {
+  return {
     name: input.firstName.trim().length > 0 && input.lastName.trim().length > 0,
     photo: input.profilePhotoUrl.trim().length > 0,
     bio: input.bio.trim().length > 0,
     specialty: input.specialtyIds.length > 0,
     location: input.locationLabel.trim().length > 0,
     credential: input.hasCredential,
-    visibility: input.visibilitySet,
   }
+}
+
+export function calculateProfileCompleteness(input: ProfileCompletenessInput): ProfileCompleteness {
+  const status = getProfileCompletenessStatus(input)
 
   const doneCount = CHECKS.filter((check) => status[check.key]).length
   const percentage = Math.round((doneCount / CHECKS.length) * 100)

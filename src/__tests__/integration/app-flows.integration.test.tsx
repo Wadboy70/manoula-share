@@ -8,6 +8,7 @@ import { renderWithApp } from '@/__tests__/integration/render-app'
 import { ForgotPasswordPage } from '@/pages/forgot-password-page'
 import { ResetPasswordPage } from '@/pages/reset-password-page'
 import { SignUpPage } from '@/pages/sign-up-page'
+import { AuthProvider } from '@/features/auth'
 import type {
   ProfessionalCredentialRow,
   ServiceAreaPlaceRow,
@@ -248,6 +249,14 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
         update: vi.fn((patch: Partial<UsersRow>) => ({
           eq: vi.fn(async () => {
             store.usersRow = { ...(store.usersRow as UsersRow), ...patch }
+            if (patch.is_professional === true && !store.profileRow) {
+              store.profileRow = makeProfessionalProfileRow({
+                user_id: store.usersRow.id,
+                is_profile_complete: false,
+                is_public_searchable: true,
+                is_approved: false,
+              })
+            }
             return { error: null }
           }),
         })),
@@ -529,9 +538,11 @@ function renderResetPassword() {
 function renderSignUp() {
   const view = render(
     <MemoryRouter initialEntries={['/signup']}>
-      <Routes>
-        <Route path="/signup" element={<SignUpPage />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </AuthProvider>
     </MemoryRouter>,
   )
   const card = view.container.querySelector('[data-slot="card"]')
@@ -786,7 +797,7 @@ describe('integration: routing and search', () => {
     })
     expect(screen.getByRole('link', { name: /finish profile/i })).toHaveAttribute(
       'href',
-      '/dashboard/profile',
+      '/professional/onboarding',
     )
   })
 
@@ -972,7 +983,61 @@ describe('integration: routing and search', () => {
       const panel = screen.getByRole('dialog')
       expect(
         within(panel).getByRole('link', { name: /join as a professional/i }),
-      ).toHaveAttribute('href', '/signup/professional')
+      ).toHaveAttribute('href', '/professional/onboarding')
+    })
+  })
+
+  it('shows Continue setup for incomplete professionals', async () => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ is_professional: true })
+    mockSb.store.profileRow = makeProfessionalProfileRow({
+      user_id: 1,
+      is_profile_complete: false,
+    })
+
+    renderWithApp(['/search'])
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^find support$/i })).toBeInTheDocument()
+    })
+
+    const u = userEvent.setup()
+    await u.click(screen.getByRole('button', { name: /open menu/i }))
+
+    await waitFor(() => {
+      const panel = screen.getByRole('dialog')
+      expect(within(panel).getByRole('link', { name: /continue setup/i })).toHaveAttribute(
+        'href',
+        '/professional/onboarding',
+      )
+    })
+  })
+
+  it('promotes a client to professional after the onboarding name step', async () => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({
+      is_professional: false,
+      first_name: '',
+      last_name: '',
+    })
+    mockSb.store.profileRow = null
+
+    renderWithApp(['/professional/onboarding'])
+    const u = userEvent.setup()
+
+    await waitFor(() => {
+      expect(screen.getByText(/^your name$/i)).toBeInTheDocument()
+    })
+
+    await u.type(screen.getByLabelText(/^first name$/i), 'Pro')
+    await u.type(screen.getByLabelText(/^last name$/i), 'Fessional')
+    await u.click(screen.getByRole('button', { name: /^continue$/i }))
+
+    await waitFor(() => {
+      expect(mockSb.store.usersRow?.is_professional).toBe(true)
+      expect(mockSb.store.usersRow?.first_name).toBe('Pro')
+      expect(mockSb.store.usersRow?.last_name).toBe('Fessional')
     })
   })
 })
@@ -1070,6 +1135,9 @@ describe('integration: reset password', () => {
 
 describe('integration: sign up', () => {
   beforeEach(() => {
+    mockSb.store.session = null
+    mockSb.store.usersRow = null
+    mockSb.store.profileRow = null
     mockSb.auth.signUp.mockResolvedValue({ error: null })
   })
 

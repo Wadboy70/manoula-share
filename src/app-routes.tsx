@@ -5,7 +5,6 @@ import {
   ProtectedRoute,
 } from '@/components/auth/protected-route'
 import { SiteChrome } from '@/components/site-chrome'
-import { SignUpRoutesLayout } from '@/features/auth/sign-up-routes-layout'
 import {
   DashboardLayout,
   DashboardOverviewPage,
@@ -16,6 +15,7 @@ import {
 import { DashboardBookingsPage } from '@/pages/dashboard-bookings-page'
 import { ForgotPasswordPage } from '@/pages/forgot-password-page'
 import { HomePage } from '@/pages/home-page'
+import { ProfessionalOnboardingPage } from '@/pages/professional-onboarding-page'
 import { ResetPasswordPage } from '@/pages/reset-password-page'
 import { ProfessionalPage } from '@/pages/professional-page'
 import { MessagingIndexRoute } from '@/features/messaging/messaging-index-route'
@@ -31,10 +31,15 @@ import { SignUpPage } from '@/pages/sign-up-page'
 export const appRouteObjects = createRoutesFromElements(
   <Route element={<SiteChrome />}>
     <Route index element={<HomePage />} />
-    <Route path="signup" element={<SignUpRoutesLayout />}>
-      <Route index element={<SignUpPage />} />
-      <Route path="professional" element={<SignUpPage />} />
-    </Route>
+    <Route
+      path="professional/onboarding"
+      element={
+        <ProtectedRoute>
+          <ProfessionalOnboardingPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route path="signup" element={<SignUpPage />} />
     <Route path="signin" element={<SignInPage />} />
     <Route path="forgot-password" element={<ForgotPasswordPage />} />
     <Route path="reset-password" element={<ResetPasswordPage />} />

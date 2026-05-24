@@ -231,7 +231,6 @@ export async function saveProfessionalProfileEditorData(
       (credential) =>
         credential.credentialType.trim().length > 0 && credential.issuingBody.trim().length > 0,
     ),
-    visibilitySet: true,
   })
 
   const [{ error: userError }, { error: profileError }] = await Promise.all([

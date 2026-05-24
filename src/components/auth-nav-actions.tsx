@@ -6,6 +6,8 @@ import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import type { AppUser } from '@/types/auth'
 
+import { getProfessionalNavCta } from '@/features/professionals/professional-user-utils'
+
 export type AuthNavVariant = 'sheet' | 'mobile'
 
 export type AuthNavActionsProps = {
@@ -57,26 +59,18 @@ export function AuthNavActions({
   const showProfessionalCta =
     Boolean(session) && !authLoading && appUser !== null
 
-  const professionalCta =
-    showProfessionalCta && appUser ? (
-      appUser.is_professional ? (
-        <Link
-          to="/dashboard"
-          className={primaryLinkClass}
-          onClick={() => afterNav(onAfterNavigate)}
-        >
-          Dashboard
-        </Link>
-      ) : (
-        <Link
-          to="/signup/professional"
-          className={outlineLinkClass}
-          onClick={() => afterNav(onAfterNavigate)}
-        >
-          Join as a professional
-        </Link>
-      )
-    ) : null
+  const professionalNavCta =
+    showProfessionalCta && appUser ? getProfessionalNavCta(appUser) : null
+
+  const professionalCta = professionalNavCta ? (
+    <Link
+      to={professionalNavCta.href}
+      className={professionalNavCta.href === '/dashboard' ? primaryLinkClass : outlineLinkClass}
+      onClick={() => afterNav(onAfterNavigate)}
+    >
+      {professionalNavCta.label}
+    </Link>
+  ) : null
 
   const messagesLink = session ? (
     <Link

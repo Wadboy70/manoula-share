@@ -12,7 +12,6 @@ describe('calculateProfileCompleteness', () => {
       specialtyIds: [1],
       locationLabel: 'London',
       hasCredential: true,
-      visibilitySet: true,
     })
 
     expect(result.percentage).toBe(100)
@@ -29,7 +28,6 @@ describe('calculateProfileCompleteness', () => {
       specialtyIds: [],
       locationLabel: '',
       hasCredential: false,
-      visibilitySet: false,
     })
 
     expect(result.isComplete).toBe(false)

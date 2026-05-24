@@ -18,7 +18,7 @@ describe('ProfileIncompletePrompt', () => {
     expect(screen.getByText(/complete your profile/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /finish profile/i })).toHaveAttribute(
       'href',
-      '/dashboard/profile',
+      '/professional/onboarding',
     )
   })
 

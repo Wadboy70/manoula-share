@@ -1,5 +1,5 @@
-import { type FormEvent, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { type FormEvent, useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -13,12 +13,15 @@ import {
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabaseClient'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/features/auth'
 
 function fieldId(base: string) {
   return `signup-${base}`
 }
 
 export function SignUpPage() {
+  const navigate = useNavigate()
+  const { session, loading: authLoading } = useAuth()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -26,6 +29,12 @@ export function SignUpPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!authLoading && session) {
+      navigate('/professional/onboarding', { replace: true })
+    }
+  }, [authLoading, navigate, session])
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()

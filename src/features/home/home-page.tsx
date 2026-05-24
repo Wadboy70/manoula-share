@@ -70,7 +70,7 @@ export function HomePage() {
               Find support
             </a>
             <a
-              href="/signup"
+              href="/professional/onboarding"
               className={cn(
                 buttonVariants({ variant: 'outline', size: 'lg' }),
                 'rounded-none border-white/80 bg-transparent text-white hover:bg-white/10',
@@ -262,7 +262,7 @@ export function HomePage() {
           </p>
           <a
             id="join-professional"
-            href="/signup/professional"
+            href="/professional/onboarding"
             className={cn(
               buttonVariants({ size: 'lg' }),
               'font-brand mt-8 rounded-none bg-black px-8 text-white hover:bg-black/90',

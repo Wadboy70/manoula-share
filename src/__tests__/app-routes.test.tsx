@@ -18,15 +18,4 @@ describe('App routes', () => {
     expect(screen.getByText(/create an account/i)).toBeInTheDocument()
   })
 
-  it('renders sign-up page at /signup/professional', () => {
-    render(
-      <MemoryRouter initialEntries={['/signup/professional']}>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </MemoryRouter>,
-    )
-
-    expect(screen.getByText(/create an account/i)).toBeInTheDocument()
-  })
 })

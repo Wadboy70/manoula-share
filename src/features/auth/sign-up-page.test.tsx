@@ -5,6 +5,14 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import { SignUpPage } from '@/features/auth/sign-up-page'
 
+vi.mock('@/features/auth', () => ({
+  useAuth: () => ({
+    session: null,
+    loading: false,
+    loadAppUser: vi.fn(),
+  }),
+}))
+
 const authSignUpMock = vi.hoisted(() =>
   vi.fn(async (): Promise<{ error: { message: string } | null }> => ({
     error: null,

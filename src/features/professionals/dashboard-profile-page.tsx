@@ -19,6 +19,7 @@ import type { LocationSuggestion } from '@/features/search/location.types'
 import { calculateProfileCompleteness } from './profile-completeness'
 import { ProfileIncompletePrompt } from './profile-incomplete-prompt'
 import { SpecialtySearchPicker } from './specialty-search-picker'
+import { ProfileStepVisibilityField } from './profile-step-visibility-field'
 import {
   fetchProfessionalProfileEditorData,
   fetchSpecialtyOptions,
@@ -61,7 +62,7 @@ function buildEmptyProfile(): ProfessionalProfileEditorData {
     longitude: null,
     geocodedAt: null,
     countryCode: 'GB',
-    isPublicSearchable: false,
+    isPublicSearchable: true,
     specialtyIds: [],
     credentials: [],
   }
@@ -142,7 +143,6 @@ export function DashboardProfilePage() {
         specialtyIds: [],
         locationLabel: '',
         hasCredential: false,
-        visibilitySet: false,
       })
     }
     const hasCredential = baselineProfile.credentials.some(
@@ -157,7 +157,6 @@ export function DashboardProfilePage() {
       specialtyIds: baselineProfile.specialtyIds,
       locationLabel: baselineProfile.locationLabel,
       hasCredential,
-      visibilitySet: true,
     })
   }, [baselineProfile])
 
@@ -689,24 +688,15 @@ export function DashboardProfilePage() {
               <CardDescription>Control whether clients can find you in search.</CardDescription>
             </CardHeader>
             <CardContent>
-              <label className="flex items-start gap-3 text-sm">
-                <input
-                  type="checkbox"
-                  checked={profile.isPublicSearchable}
-                  onChange={(event) =>
-                    setProfile((prev) => ({
-                      ...prev,
-                      isPublicSearchable: event.target.checked,
-                    }))
-                  }
-                />
-                <span>
-                  Public/searchable profile
-                  <span className="text-muted-foreground block">
-                    Turn this off to hide your profile from search.
-                  </span>
-                </span>
-              </label>
+              <ProfileStepVisibilityField
+                isPublicSearchable={profile.isPublicSearchable}
+                onChange={(value) =>
+                  setProfile((prev) => ({
+                    ...prev,
+                    isPublicSearchable: value,
+                  }))
+                }
+              />
             </CardContent>
           </Card>
 

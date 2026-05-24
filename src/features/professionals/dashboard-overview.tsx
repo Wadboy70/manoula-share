@@ -55,9 +55,9 @@ export function DashboardOverviewPage() {
             : [
                 'Finish your profile details',
                 'Add credentials for trust',
-                'Set visibility to public when ready',
               ]
         }
+        ctaHref="/professional/onboarding"
       />
 
       <section aria-labelledby="dashboard-stats-heading">
