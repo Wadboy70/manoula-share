@@ -11,6 +11,7 @@ import {
   DashboardProfilePage,
   DashboardServicesPage,
   DashboardSettingsPlaceholderPage,
+  DashboardAvailabilityPage,
 } from '@/pages/dashboard-page'
 import { DashboardBookingsPage } from '@/pages/dashboard-bookings-page'
 import { ForgotPasswordPage } from '@/pages/forgot-password-page'
@@ -84,6 +85,7 @@ export const appRouteObjects = createRoutesFromElements(
       <Route path="bookings" element={<DashboardBookingsPage />} />
       <Route path="profile" element={<DashboardProfilePage />} />
       <Route path="services" element={<DashboardServicesPage />} />
+      <Route path="availability" element={<DashboardAvailabilityPage />} />
       <Route path="settings" element={<DashboardSettingsPlaceholderPage />} />
     </Route>
   </Route>,

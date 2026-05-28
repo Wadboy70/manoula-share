@@ -7,6 +7,7 @@ import {
 } from '@/features/search/delivery-mode-filter'
 import { cn } from '@/lib/utils'
 
+import { formatBookingTimestamp } from './booking-detail-utils'
 import { bookingStatusBadgeClass, bookingStatusLabel } from './booking-status'
 import {
   counterpartyDisplayName,
@@ -46,6 +47,7 @@ export function BookingCard({
   const conversationId = resolveConversationId(booking.conversations)
   const serviceTitle = booking.services?.title ?? 'Consultation'
   const deliveryLabel = deliveryModeLabel(booking.services?.delivery_mode)
+  const requestedTime = formatBookingTimestamp(booking.scheduled_at)
 
   return (
     <article className="border-foreground/10 flex flex-col gap-3 rounded-lg border px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -66,6 +68,10 @@ export function BookingCard({
           </span>
         </div>
         <p className="text-muted-foreground mt-1 text-sm">{serviceTitle}</p>
+        {requestedTime &&
+        (booking.status === 'pending' || booking.status === 'accepted') ? (
+          <p className="text-muted-foreground mt-0.5 text-xs">Requested: {requestedTime}</p>
+        ) : null}
         {deliveryLabel ? (
           <p className="text-muted-foreground mt-0.5 text-xs">{deliveryLabel}</p>
         ) : null}

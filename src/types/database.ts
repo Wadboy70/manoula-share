@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -183,6 +178,99 @@ export type Database = {
           {
             foreignKeyName: "messages_sender_id_fkey"
             columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professional_availability_exceptions: {
+        Row: {
+          created_at: string
+          end_time: string | null
+          exception_date: string
+          id: number
+          kind: Database["public"]["Enums"]["availability_exception_kind"]
+          professional_id: number
+          start_time: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_time?: string | null
+          exception_date: string
+          id?: number
+          kind: Database["public"]["Enums"]["availability_exception_kind"]
+          professional_id: number
+          start_time?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string | null
+          exception_date?: string
+          id?: number
+          kind?: Database["public"]["Enums"]["availability_exception_kind"]
+          professional_id?: number
+          start_time?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_availability_exceptions_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_search_cards_enriched"
+            referencedColumns: ["professional_id"]
+          },
+          {
+            foreignKeyName: "professional_availability_exceptions_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      professional_availability_rules: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: number
+          professional_id: number
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: number
+          professional_id: number
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: number
+          professional_id?: number
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_availability_rules_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professional_search_cards_enriched"
+            referencedColumns: ["professional_id"]
+          },
+          {
+            foreignKeyName: "professional_availability_rules_professional_id_fkey"
+            columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -674,14 +762,36 @@ export type Database = {
     }
     Functions: {
       app_user_id_for_auth: { Args: never; Returns: number }
+      availability_slot_is_bookable: {
+        Args: {
+          p_duration_minutes: number
+          p_professional_id: number
+          p_scheduled_at: string
+        }
+        Returns: boolean
+      }
+      booking_scheduled_at_conflicts: {
+        Args: {
+          p_duration_minutes: number
+          p_exclude_booking_id?: number
+          p_professional_id: number
+          p_scheduled_at: string
+        }
+        Returns: boolean
+      }
       ensure_messaging_conversation: {
-        Args: { p_professional_id: number; p_service_id: number }
+        Args: {
+          p_professional_id: number
+          p_scheduled_at?: string
+          p_service_id: number
+        }
         Returns: number
       }
       is_professional_publicly_listable: {
         Args: { pro_id: number }
         Returns: boolean
       }
+      iso_day_of_week: { Args: { p_date: string }; Returns: number }
       professional_search_profiles_refresh_ratings_for_professional: {
         Args: { p_professional_id: number }
         Returns: undefined
@@ -724,6 +834,7 @@ export type Database = {
       upsert_professional_profile: { Args: { p_payload: Json }; Returns: Json }
     }
     Enums: {
+      availability_exception_kind: "unavailable" | "available"
       booking_status: "pending" | "accepted" | "declined" | "completed"
     }
     CompositeTypes: {
@@ -855,7 +966,9 @@ export const Constants = {
   },
   public: {
     Enums: {
+      availability_exception_kind: ["unavailable", "available"],
       booking_status: ["pending", "accepted", "declined", "completed"],
     },
   },
 } as const
+

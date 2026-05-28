@@ -60,7 +60,7 @@ export async function fetchActiveServicesForProfessional(
 ): Promise<{ data: ServiceOption[] | null; error: Error | null }> {
   const { data, error } = await supabase
     .from('services')
-    .select('id, title, description, professional_id, is_active')
+    .select('id, title, description, professional_id, is_active, duration_minutes')
     .eq('professional_id', professionalId)
     .eq('is_active', true)
     .order('title', { ascending: true })
@@ -75,10 +75,12 @@ export async function fetchActiveServicesForProfessional(
 export async function ensureMessagingConversation(
   professionalId: number,
   serviceId: number,
+  scheduledAt?: string | null,
 ): Promise<{ conversationId: number | null; error: Error | null }> {
   const { data, error } = await supabase.rpc('ensure_messaging_conversation', {
     p_professional_id: professionalId,
     p_service_id: serviceId,
+    p_scheduled_at: scheduledAt ?? undefined,
   })
 
   if (error) {

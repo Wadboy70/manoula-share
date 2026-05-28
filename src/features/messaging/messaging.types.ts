@@ -17,5 +17,5 @@ export type MessageRow = Database['public']['Tables']['messages']['Row']
 
 export type ServiceOption = Pick<
   Database['public']['Tables']['services']['Row'],
-  'id' | 'title' | 'description' | 'professional_id' | 'is_active'
+  'id' | 'title' | 'description' | 'professional_id' | 'is_active' | 'duration_minutes'
 >

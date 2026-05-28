@@ -214,6 +214,58 @@ export function makeBookingListRow(
   }
 }
 
+export type AvailabilityRuleRowFixture = {
+  id: number
+  professional_id: number
+  day_of_week: number
+  start_time: string
+  end_time: string
+  created_at: string
+  updated_at: string
+}
+
+export function makeAvailabilityRuleRow(
+  overrides: Partial<AvailabilityRuleRowFixture> = {},
+): AvailabilityRuleRowFixture {
+  return {
+    id: 1,
+    professional_id: 1,
+    day_of_week: 1,
+    start_time: '09:00:00',
+    end_time: '12:00:00',
+    created_at: ISO,
+    updated_at: ISO,
+    ...overrides,
+  }
+}
+
+export type AvailabilityExceptionRowFixture = {
+  id: number
+  professional_id: number
+  exception_date: string
+  kind: 'unavailable' | 'available'
+  start_time: string | null
+  end_time: string | null
+  created_at: string
+  updated_at: string
+}
+
+export function makeAvailabilityExceptionRow(
+  overrides: Partial<AvailabilityExceptionRowFixture> = {},
+): AvailabilityExceptionRowFixture {
+  return {
+    id: 1,
+    professional_id: 1,
+    exception_date: '2026-12-25',
+    kind: 'unavailable',
+    start_time: null,
+    end_time: null,
+    created_at: ISO,
+    updated_at: ISO,
+    ...overrides,
+  }
+}
+
 export function makeServiceAreaPlaceRow(overrides: Partial<ServiceAreaPlaceRow> = {}): ServiceAreaPlaceRow {
   return {
     id: 31,

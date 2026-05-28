@@ -19,6 +19,8 @@ import type {
 } from '@/test/integration/fixtures'
 import {
   makeAuthUser,
+  makeAvailabilityExceptionRow,
+  makeAvailabilityRuleRow,
   makeBookingListRow,
   makeProfessionalCredentialRow,
   makeProfessionalProfileRow,
@@ -41,6 +43,8 @@ type IntegrationStore = {
   specialtyRows: { specialty_id: number }[]
   specialties: { id: number; label: string }[]
   bookingRows: ReturnType<typeof makeBookingListRow>[]
+  availabilityRuleRows: ReturnType<typeof makeAvailabilityRuleRow>[]
+  availabilityExceptionRows: ReturnType<typeof makeAvailabilityExceptionRow>[]
 }
 
 type IntegrationSupabaseClient = {
@@ -84,6 +88,8 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
       { id: 3, label: 'Therapist' },
     ],
     bookingRows: [],
+    availabilityRuleRows: [],
+    availabilityExceptionRows: [],
   }
 
   const emitAuthStateChange = (event: string, nextSession: Session | null) => {
@@ -397,6 +403,7 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
           let column: 'professional_id' | 'client_id' = 'client_id'
           let value = 0
           let statuses: string[] = []
+          let requireScheduled = false
 
           const builder = {
             eq: vi.fn((col: 'professional_id' | 'client_id', val: number) => {
@@ -408,15 +415,24 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
               statuses = statusList
               return builder
             }),
+            not: vi.fn((col: string, op: string, val: null) => {
+              if (col === 'scheduled_at' && op === 'is' && val === null) {
+                requireScheduled = true
+              }
+              return builder
+            }),
             order: vi.fn(() => builder),
             then(
               resolve: (result: { data: unknown; error: null }) => void,
               reject?: (reason: unknown) => void,
             ) {
               try {
-                const filtered = store.bookingRows.filter(
-                  (b) => b[column] === value && statuses.includes(b.status),
+                let filtered = store.bookingRows.filter(
+                  (b) => b[column] === value && (statuses.length === 0 || statuses.includes(b.status)),
                 )
+                if (requireScheduled) {
+                  filtered = filtered.filter((b) => b.scheduled_at != null)
+                }
                 resolve({ data: filtered, error: null })
               } catch (err) {
                 reject?.(err)
@@ -426,6 +442,94 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
 
           return builder
         }),
+      }
+    }
+    if (table === 'professional_availability_rules') {
+      const listBuilder = {
+        eq: vi.fn(() => listBuilder),
+        order: vi.fn(() => listBuilder),
+        then(
+          resolve: (result: { data: unknown; error: null }) => void,
+          reject?: (reason: unknown) => void,
+        ) {
+          try {
+            resolve({ data: store.availabilityRuleRows, error: null })
+          } catch (err) {
+            reject?.(err)
+          }
+        },
+      }
+
+      return {
+        select: vi.fn(() => listBuilder),
+        insert: vi.fn((row: Partial<ReturnType<typeof makeAvailabilityRuleRow>>) => ({
+          select: vi.fn(() => ({
+            single: vi.fn(async () => {
+              const nextId = Math.max(0, ...store.availabilityRuleRows.map((item) => item.id)) + 1
+              const created = makeAvailabilityRuleRow({
+                id: nextId,
+                professional_id: row.professional_id ?? 1,
+                day_of_week: row.day_of_week ?? 1,
+                start_time: row.start_time ?? '09:00:00',
+                end_time: row.end_time ?? '17:00:00',
+              })
+              store.availabilityRuleRows = [...store.availabilityRuleRows, created]
+              return { data: created, error: null }
+            }),
+          })),
+        })),
+        delete: vi.fn(() => ({
+          eq: vi.fn(async (_: string, id: number) => {
+            store.availabilityRuleRows = store.availabilityRuleRows.filter((row) => row.id !== id)
+            return { error: null }
+          }),
+        })),
+      }
+    }
+    if (table === 'professional_availability_exceptions') {
+      const listBuilder = {
+        eq: vi.fn(() => listBuilder),
+        order: vi.fn(() => listBuilder),
+        then(
+          resolve: (result: { data: unknown; error: null }) => void,
+          reject?: (reason: unknown) => void,
+        ) {
+          try {
+            resolve({ data: store.availabilityExceptionRows, error: null })
+          } catch (err) {
+            reject?.(err)
+          }
+        },
+      }
+
+      return {
+        select: vi.fn(() => listBuilder),
+        insert: vi.fn((row: Partial<ReturnType<typeof makeAvailabilityExceptionRow>>) => ({
+          select: vi.fn(() => ({
+            single: vi.fn(async () => {
+              const nextId =
+                Math.max(0, ...store.availabilityExceptionRows.map((item) => item.id)) + 1
+              const created = makeAvailabilityExceptionRow({
+                id: nextId,
+                professional_id: row.professional_id ?? 1,
+                exception_date: row.exception_date ?? '2026-12-25',
+                kind: row.kind ?? 'unavailable',
+                start_time: row.start_time ?? null,
+                end_time: row.end_time ?? null,
+              })
+              store.availabilityExceptionRows = [...store.availabilityExceptionRows, created]
+              return { data: created, error: null }
+            }),
+          })),
+        })),
+        delete: vi.fn(() => ({
+          eq: vi.fn(async (_: string, id: number) => {
+            store.availabilityExceptionRows = store.availabilityExceptionRows.filter(
+              (row) => row.id !== id,
+            )
+            return { error: null }
+          }),
+        })),
       }
     }
     if (table === 'conversations') {
@@ -922,6 +1026,61 @@ describe('integration: routing and search', () => {
       expect(mockSb.store.serviceRows.some((row) => row.title === 'Virtual support call updated')).toBe(false)
     })
     confirmSpy.mockRestore()
+  })
+
+  it('allows professionals to manage availability rules and exceptions', async () => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ id: 1, is_professional: true })
+    mockSb.store.profileRow = makeProfessionalProfileRow({ user_id: 1 })
+
+    renderWithApp(['/dashboard/availability'])
+    const u = userEvent.setup()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^availability$/i })).toBeInTheDocument()
+    })
+
+    await u.click(screen.getByRole('button', { name: /^add window$/i }))
+
+    await waitFor(() => {
+      expect(mockSb.store.availabilityRuleRows).toHaveLength(1)
+    })
+    expect(screen.getByText(/monday ·/i)).toBeInTheDocument()
+
+    const dateInput = screen.getByLabelText(/^date$/i)
+    await u.clear(dateInput)
+    await u.type(dateInput, '2026-12-25')
+    await u.click(screen.getByRole('button', { name: /^add exception$/i }))
+
+    await waitFor(() => {
+      expect(mockSb.store.availabilityExceptionRows).toHaveLength(1)
+    })
+    expect(screen.getByText(/unavailable \(all day\)/i)).toBeInTheDocument()
+  })
+
+  it('shows requested time on client bookings when scheduled', async () => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ id: 2, is_professional: false })
+    mockSb.store.bookingRows = [
+      makeBookingListRow({
+        id: 1,
+        client_id: 2,
+        professional_id: 1,
+        status: 'pending',
+        scheduled_at: '2026-06-10T10:00:00.000Z',
+      }),
+    ]
+
+    renderWithApp(['/bookings'])
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^my bookings$/i })).toBeInTheDocument()
+    })
+    await waitFor(() => {
+      expect(screen.getByText(/requested:/i)).toBeInTheDocument()
+    })
   })
 
   it('shows the brand header on sign-in and lists auth actions in the desktop menu sheet', async () => {

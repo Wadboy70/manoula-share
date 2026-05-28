@@ -210,7 +210,7 @@ export function DashboardOverviewPage() {
         <Card>
           <CardHeader>
             <CardTitle id="dashboard-manage-heading">Manage your business</CardTitle>
-            <CardDescription>Profile, services, bookings, and settings.</CardDescription>
+            <CardDescription>Profile, services, availability, bookings, and settings.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -231,6 +231,12 @@ export function DashboardOverviewPage() {
                 className={buttonVariants({ variant: 'outline', className: 'rounded-none sm:min-w-[10rem]' })}
               >
                 Services
+              </Link>
+              <Link
+                to="/dashboard/availability"
+                className={buttonVariants({ variant: 'outline', className: 'rounded-none sm:min-w-[10rem]' })}
+              >
+                Availability
               </Link>
               <Link
                 to="/dashboard/settings"
