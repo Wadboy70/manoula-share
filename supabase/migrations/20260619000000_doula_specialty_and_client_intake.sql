@@ -16,8 +16,7 @@ as $$
       replace(
         regexp_replace(coalesce(p_value, ''), '<[^>]*>', '', 'g'),
         chr(0),
-        '',
-        'g'
+        ''
       )
     ),
     p_max
