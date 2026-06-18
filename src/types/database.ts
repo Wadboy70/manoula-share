@@ -103,6 +103,86 @@ export type Database = {
           },
         ]
       }
+      client_desired_specialties: {
+        Row: {
+          client_id: number
+          created_at: string
+          specialty_id: number
+        }
+        Insert: {
+          client_id: number
+          created_at?: string
+          specialty_id: number
+        }
+        Update: {
+          client_id?: number
+          created_at?: string
+          specialty_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_desired_specialties_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_desired_specialties_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "specialties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_intake_profiles: {
+        Row: {
+          country_code: string
+          created_at: string
+          geocoded_at: string | null
+          latitude: number | null
+          location_label: string | null
+          longitude: number | null
+          looking_for_details: string | null
+          place_id: string | null
+          updated_at: string
+          user_id: number
+        }
+        Insert: {
+          country_code?: string
+          created_at?: string
+          geocoded_at?: string | null
+          latitude?: number | null
+          location_label?: string | null
+          longitude?: number | null
+          looking_for_details?: string | null
+          place_id?: string | null
+          updated_at?: string
+          user_id: number
+        }
+        Update: {
+          country_code?: string
+          created_at?: string
+          geocoded_at?: string | null
+          latitude?: number | null
+          location_label?: string | null
+          longitude?: number | null
+          looking_for_details?: string | null
+          place_id?: string | null
+          updated_at?: string
+          user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_intake_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           booking_id: number
@@ -708,8 +788,10 @@ export type Database = {
           email: string | null
           first_name: string | null
           id: number
+          intake_submitted_at: string | null
           is_professional: boolean | null
           last_name: string | null
+          lead_status: string | null
           profile_photo_url: string | null
         }
         Insert: {
@@ -720,8 +802,10 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id?: number
+          intake_submitted_at?: string | null
           is_professional?: boolean | null
           last_name?: string | null
+          lead_status?: string | null
           profile_photo_url?: string | null
         }
         Update: {
@@ -732,8 +816,10 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           id?: number
+          intake_submitted_at?: string | null
           is_professional?: boolean | null
           last_name?: string | null
+          lead_status?: string | null
           profile_photo_url?: string | null
         }
         Relationships: []
@@ -824,6 +910,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      submit_client_intake: { Args: { payload: Json }; Returns: Json }
+      submit_professional_intake: { Args: { payload: Json }; Returns: Json }
       update_booking_status: {
         Args: {
           p_booking_id: number

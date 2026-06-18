@@ -12,12 +12,14 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { useAuth } from '@/features/auth'
+import { isPrelaunchMode } from '@/lib/prelaunch'
 
 export function SiteHeader() {
   const navigate = useNavigate()
   const { session, appUser, loading: authLoading, signOut } = useAuth()
   const [loggingOut, setLoggingOut] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const prelaunch = isPrelaunchMode()
 
   async function onLogout() {
     setLoggingOut(true)
@@ -39,6 +41,7 @@ export function SiteHeader() {
           MA NOULA
         </Link>
 
+        {prelaunch ? null : (
         <div className="hidden md:flex md:items-center md:justify-end">
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger
@@ -70,6 +73,7 @@ export function SiteHeader() {
             </SheetContent>
           </Sheet>
         </div>
+        )}
       </div>
     </header>
   )

@@ -4,6 +4,7 @@ import {
   ProfessionalOnlyRoute,
   ProtectedRoute,
 } from '@/components/auth/protected-route'
+import { prelaunchGuard } from '@/lib/prelaunch-guard'
 import { SiteChrome } from '@/components/site-chrome'
 import {
   DashboardLayout,
@@ -14,8 +15,10 @@ import {
   DashboardAvailabilityPage,
 } from '@/pages/dashboard-page'
 import { DashboardBookingsPage } from '@/pages/dashboard-bookings-page'
+import { ClientIntakePage } from '@/pages/client-intake-page'
 import { ForgotPasswordPage } from '@/pages/forgot-password-page'
 import { HomePage } from '@/pages/home-page'
+import { ProfessionalIntakePage } from '@/pages/professional-intake-page'
 import { ProfessionalOnboardingPage } from '@/pages/professional-onboarding-page'
 import { ResetPasswordPage } from '@/pages/reset-password-page'
 import { ProfessionalPage } from '@/pages/professional-page'
@@ -32,42 +35,44 @@ import { SignUpPage } from '@/pages/sign-up-page'
 export const appRouteObjects = createRoutesFromElements(
   <Route element={<SiteChrome />}>
     <Route index element={<HomePage />} />
+    <Route path="find-support" element={<ClientIntakePage />} />
+    <Route path="join" element={<ProfessionalIntakePage />} />
     <Route
       path="professional/onboarding"
-      element={
+      element={prelaunchGuard(
         <ProtectedRoute>
           <ProfessionalOnboardingPage />
-        </ProtectedRoute>
-      }
+        </ProtectedRoute>,
+      )}
     />
-    <Route path="signup" element={<SignUpPage />} />
-    <Route path="signin" element={<SignInPage />} />
-    <Route path="forgot-password" element={<ForgotPasswordPage />} />
-    <Route path="reset-password" element={<ResetPasswordPage />} />
-    <Route path="search" element={<SearchPage />} />
+    <Route path="signup" element={prelaunchGuard(<SignUpPage />)} />
+    <Route path="signin" element={prelaunchGuard(<SignInPage />)} />
+    <Route path="forgot-password" element={prelaunchGuard(<ForgotPasswordPage />)} />
+    <Route path="reset-password" element={prelaunchGuard(<ResetPasswordPage />)} />
+    <Route path="search" element={prelaunchGuard(<SearchPage />)} />
     <Route
       path="professionals/:professionalId"
-      element={
+      element={prelaunchGuard(
         <ProtectedRoute>
           <ProfessionalPage />
-        </ProtectedRoute>
-      }
+        </ProtectedRoute>,
+      )}
     />
     <Route
       path="bookings"
-      element={
+      element={prelaunchGuard(
         <ProtectedRoute>
           <ClientBookingsPage />
-        </ProtectedRoute>
-      }
+        </ProtectedRoute>,
+      )}
     />
     <Route
       path="messages"
-      element={
+      element={prelaunchGuard(
         <ProtectedRoute>
           <MessagingLayout />
-        </ProtectedRoute>
-      }
+        </ProtectedRoute>,
+      )}
     >
       <Route index element={<MessagingIndexRoute />} />
       <Route path="start/:professionalId" element={<MessagingStartRoute />} />
@@ -75,11 +80,11 @@ export const appRouteObjects = createRoutesFromElements(
     </Route>
     <Route
       path="dashboard"
-      element={
+      element={prelaunchGuard(
         <ProfessionalOnlyRoute>
           <DashboardLayout />
-        </ProfessionalOnlyRoute>
-      }
+        </ProfessionalOnlyRoute>,
+      )}
     >
       <Route index element={<DashboardOverviewPage />} />
       <Route path="bookings" element={<DashboardBookingsPage />} />

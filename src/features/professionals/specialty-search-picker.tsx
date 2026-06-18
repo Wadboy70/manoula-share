@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 export type SpecialtyPickerOption = {
   id: number
@@ -11,6 +12,8 @@ export type SpecialtyPickerOption = {
 
 type SpecialtySearchPickerProps = {
   id?: string
+  label?: string
+  labelClassName?: string
   options: SpecialtyPickerOption[]
   /** Selected specialty ids (order preserved for lozenge display). */
   value: number[]
@@ -20,6 +23,8 @@ type SpecialtySearchPickerProps = {
 
 export function SpecialtySearchPicker({
   id: idProp,
+  label = 'Specialties',
+  labelClassName,
   options,
   value,
   onChange,
@@ -91,101 +96,91 @@ export function SpecialtySearchPicker({
   )
 
   return (
-    <div ref={rootRef} className="space-y-3">
-      <div>
-        <p className="text-muted-foreground mb-2 text-xs">Selected</p>
-        {selectedOrdered.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No specialties selected yet.</p>
-        ) : (
-          <ul className="flex flex-wrap gap-2" aria-label="Selected specialties">
-            {selectedOrdered.map((opt) => (
-              <li key={opt.id}>
-                <span className="border-foreground/15 bg-foreground/5 text-foreground inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-sm">
-                  <span className="min-w-0 truncate">{opt.label}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    disabled={disabled}
-                    className="text-muted-foreground hover:text-foreground shrink-0 rounded-full"
-                    onClick={() => removeSpecialty(opt.id)}
-                    aria-label={`Remove ${opt.label}`}
-                  >
-                    <X className="size-3.5" aria-hidden />
-                  </Button>
-                </span>
+    <div ref={rootRef} className="space-y-2">
+      <label className={cn('text-sm font-medium', labelClassName)} htmlFor={inputId}>
+        {label}
+      </label>
+      <div className="relative">
+        <Input
+          id={inputId}
+          type="text"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls={listboxId}
+          aria-autocomplete="list"
+          disabled={disabled}
+          value={search}
+          placeholder="Search specialties…"
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setOpen(true)
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => {
+            queueMicrotask(() => {
+              const root = rootRef.current
+              const active = document.activeElement
+              if (!root || !active || !root.contains(active)) {
+                setOpen(false)
+              }
+            })
+          }}
+          className="rounded-lg"
+        />
+        {open && !disabled ? (
+          <ul
+            id={listboxId}
+            role="listbox"
+            className="border-input bg-background absolute z-[100] mt-1 max-h-60 w-full overflow-auto rounded-lg border py-1 shadow-md"
+          >
+            {availableFiltered.length === 0 ? (
+              <li className="text-muted-foreground px-3 py-2 text-sm" role="presentation">
+                {normalizedQuery ? 'No matching specialties.' : 'All specialties are selected.'}
               </li>
-            ))}
+            ) : (
+              availableFiltered.map((opt) => (
+                <li key={opt.id} role="presentation">
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={false}
+                    className="hover:bg-muted/80 focus:bg-muted/80 w-full px-3 py-2 text-left text-sm outline-none"
+                    onMouseDown={(event) => {
+                      event.preventDefault()
+                    }}
+                    onClick={() => addSpecialty(opt.id)}
+                  >
+                    {opt.label}
+                  </button>
+                </li>
+              ))
+            )}
           </ul>
-        )}
+        ) : null}
       </div>
 
-      <div className="space-y-1.5">
-        <label className="text-sm font-medium" htmlFor={inputId}>
-          Add specialty
-        </label>
-        <div className="relative">
-          <Input
-            id={inputId}
-            type="text"
-            role="combobox"
-            aria-expanded={open}
-            aria-controls={listboxId}
-            aria-autocomplete="list"
-            disabled={disabled}
-            value={search}
-            placeholder="Search specialties…"
-            onChange={(e) => {
-              setSearch(e.target.value)
-              setOpen(true)
-            }}
-            onFocus={() => setOpen(true)}
-            onBlur={() => {
-              queueMicrotask(() => {
-                const root = rootRef.current
-                const active = document.activeElement
-                if (!root || !active || !root.contains(active)) {
-                  setOpen(false)
-                }
-              })
-            }}
-            className="rounded-lg"
-          />
-          {open && !disabled ? (
-            <ul
-              id={listboxId}
-              role="listbox"
-              className="border-input bg-background absolute z-[100] mt-1 max-h-60 w-full overflow-auto rounded-lg border py-1 shadow-md"
-            >
-              {availableFiltered.length === 0 ? (
-                <li className="text-muted-foreground px-3 py-2 text-sm" role="presentation">
-                  {normalizedQuery ? 'No matching specialties.' : 'All specialties are selected.'}
-                </li>
-              ) : (
-                availableFiltered.map((opt) => (
-                  <li key={opt.id} role="presentation">
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={false}
-                      className="hover:bg-muted/80 focus:bg-muted/80 w-full px-3 py-2 text-left text-sm outline-none"
-                      onMouseDown={(event) => {
-                        event.preventDefault()
-                      }}
-                      onClick={() => addSpecialty(opt.id)}
-                    >
-                      {opt.label}
-                    </button>
-                  </li>
-                ))
-              )}
-            </ul>
-          ) : null}
-        </div>
-        <p className="text-muted-foreground text-xs">
-          Search below; chosen specialties appear above and are removed from the list.
-        </p>
-      </div>
+      {selectedOrdered.length > 0 ? (
+        <ul className="flex flex-wrap gap-2 pt-1" aria-label="Selected specialties">
+          {selectedOrdered.map((opt) => (
+            <li key={opt.id}>
+              <span className="border-foreground/15 bg-foreground/5 text-foreground inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-sm">
+                <span className="min-w-0 truncate">{opt.label}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  disabled={disabled}
+                  className="text-muted-foreground hover:text-foreground shrink-0 rounded-full"
+                  onClick={() => removeSpecialty(opt.id)}
+                  aria-label={`Remove ${opt.label}`}
+                >
+                  <X className="size-3.5" aria-hidden />
+                </Button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   )
 }

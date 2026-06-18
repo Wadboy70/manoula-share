@@ -1,25 +1,15 @@
+import { Link } from 'react-router-dom'
+
 import { buttonVariants } from '@/components/ui/button'
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card'
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel'
 import {
   aboutHeading,
   aboutParagraphs,
   heroTagline,
-  specialties,
   steps,
-  testimonials,
 } from '@/features/home/home-content'
 import { cn } from '@/lib/utils'
 
@@ -58,26 +48,28 @@ export function HomePage() {
           </p>
           <div
             id="book"
-            className="mt-10 flex flex-wrap items-center justify-center gap-4"
+            className="mt-12 flex w-full max-w-2xl flex-col items-stretch justify-center gap-4 sm:flex-row sm:flex-wrap sm:items-center"
           >
-            <a
-              href="/search"
+            <Link
+              to="/find-support"
               className={cn(
                 buttonVariants({ size: 'lg' }),
-                'rounded-none bg-[#e5e5e5] px-8 text-black hover:bg-white',
+                'font-body min-h-14 w-full rounded-none px-10 text-base font-semibold text-black sm:w-auto md:min-h-16 md:px-14 md:text-lg',
+                'bg-[#e5e5e5] hover:bg-white',
               )}
             >
               Find support
-            </a>
-            <a
-              href="/professional/onboarding"
+            </Link>
+            <Link
+              to="/join"
               className={cn(
                 buttonVariants({ variant: 'outline', size: 'lg' }),
-                'rounded-none border-white/80 bg-transparent text-white hover:bg-white/10',
+                'font-body min-h-14 w-full rounded-none border-2 border-white/90 px-10 text-base font-semibold text-white sm:w-auto md:min-h-16 md:px-14 md:text-lg',
+                'bg-transparent hover:bg-white/10',
               )}
             >
               Join as a professional
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -107,52 +99,15 @@ export function HomePage() {
               <p key={i}>{p}</p>
             ))}
           </div>
-          <a
-            href="#specialties"
+          <Link
+            to="/find-support"
             className={cn(
               buttonVariants({ size: 'lg' }),
               'font-brand mt-10 w-fit rounded-none bg-black px-10 text-white hover:bg-black/90',
             )}
           >
-            Learn more
-          </a>
-        </div>
-      </section>
-
-      {/* Services / specialties */}
-      <section
-        id="specialties"
-        className="border-y border-white/10 bg-zinc-950 py-16 md:py-24"
-        aria-labelledby="specialties-heading"
-      >
-        <div className="mx-auto max-w-6xl px-4 md:px-6">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2
-              id="specialties-heading"
-              className="font-brand text-3xl font-medium tracking-tight text-white md:text-4xl"
-            >
-              Our services
-            </h2>
-            <p className="font-body mt-4 text-lg text-zinc-300">
-              Explore categories from our network of certified professionals.
-            </p>
-          </div>
-          <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {specialties.map((item) => (
-              <li key={item.title}>
-                <Card className="h-full border-white/10 shadow-none transition-shadow hover:shadow-md">
-                  <CardHeader>
-                    <CardTitle className="font-brand text-lg font-medium">
-                      {item.title}
-                    </CardTitle>
-                    <CardDescription className="font-body text-base leading-relaxed">
-                      {item.blurb}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </li>
-            ))}
-          </ul>
+            Get started
+          </Link>
         </div>
       </section>
 
@@ -171,10 +126,10 @@ export function HomePage() {
               How it works
             </h2>
             <p className="font-body mt-4 text-lg text-muted-foreground">
-              From discovery to ongoing care—simple steps, clear expectations.
+              We collect your information, then reach out to connect you with the right people.
             </p>
           </div>
-          <ol className="mt-12 grid gap-4 md:grid-cols-2">
+          <ol className="mt-12 grid gap-4 md:grid-cols-3">
             {steps.map((item) => (
               <li key={item.step}>
                 <Card className="h-full border-white/10 bg-zinc-950 shadow-sm">
@@ -198,78 +153,6 @@ export function HomePage() {
               </li>
             ))}
           </ol>
-        </div>
-      </section>
-
-      {/* Testimonials — dark carousel */}
-      <section
-        id="stories"
-        className="bg-black py-20 text-white md:py-28"
-        aria-labelledby="stories-heading"
-      >
-        <div className="mx-auto max-w-4xl px-4 sm:px-12 md:px-16">
-          <h2
-            id="stories-heading"
-            className="font-brand text-center text-2xl font-medium tracking-wide md:text-3xl"
-          >
-            Stories
-          </h2>
-          <Carousel
-            opts={{ loop: true, align: 'center' }}
-            className="relative mt-12"
-          >
-            <CarouselPrevious
-              className="-left-2 border-0 bg-zinc-300 text-black hover:bg-zinc-200 md:-left-4"
-              variant="outline"
-            />
-            <CarouselContent className="ml-0">
-              {testimonials.map((t) => (
-                <CarouselItem key={t.name}>
-                  <blockquote className="font-body mx-auto max-w-2xl px-4 text-center text-lg leading-relaxed md:text-xl">
-                    {t.quote}
-                  </blockquote>
-                  <p className="font-body mt-8 text-center text-sm italic text-zinc-400">
-                    {t.name}
-                    {t.detail ? ` · ${t.detail}` : ''}
-                  </p>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselNext
-              className="-right-2 border-0 bg-zinc-300 text-black hover:bg-zinc-200 md:-right-4"
-              variant="outline"
-            />
-          </Carousel>
-        </div>
-      </section>
-
-      {/* Pro CTA */}
-      <section
-        id="for-professionals"
-        className="mx-auto max-w-6xl px-4 py-16 md:py-20"
-        aria-labelledby="pro-heading"
-      >
-        <div className="relative overflow-hidden border border-white/10 bg-zinc-900 px-6 py-12 text-center md:px-12">
-          <h2
-            id="pro-heading"
-            className="font-brand text-2xl font-medium md:text-3xl"
-          >
-            Grow your practice with Manoula
-          </h2>
-          <p className="font-body mx-auto mt-4 max-w-xl text-pretty text-lg text-zinc-300">
-            Manage your public profile, services, availability, and bookings in
-            one dashboard—built for certified maternal wellness professionals.
-          </p>
-          <a
-            id="join-professional"
-            href="/professional/onboarding"
-            className={cn(
-              buttonVariants({ size: 'lg' }),
-              'font-brand mt-8 rounded-none bg-black px-8 text-white hover:bg-black/90',
-            )}
-          >
-            Join as a professional
-          </a>
         </div>
       </section>
     </main>

@@ -3,11 +3,16 @@ import { useNavigate } from 'react-router-dom'
 
 import { AuthNavActions } from '@/components/auth-nav-actions'
 import { useAuth } from '@/features/auth'
+import { isPrelaunchMode } from '@/lib/prelaunch'
 
 export function MobileAuthNav() {
   const navigate = useNavigate()
   const { session, appUser, loading: authLoading, signOut } = useAuth()
   const [loggingOut, setLoggingOut] = useState(false)
+
+  if (isPrelaunchMode()) {
+    return null
+  }
 
   async function onLogout() {
     setLoggingOut(true)

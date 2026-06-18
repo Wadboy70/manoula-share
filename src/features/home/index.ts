@@ -7,7 +7,5 @@ export {
   footerLocation,
   footerTagline,
   heroTagline,
-  specialties,
   steps,
-  testimonials,
 } from './home-content'
