@@ -12,6 +12,7 @@ const validClientValues: ClientIntakeFormValues = {
   lastName: 'Doe',
   email: 'jane@example.com',
   specialtyIds: [1],
+  somethingElseSelected: false,
   locationLabel: 'London, UK',
   placeId: 'place.london',
   latitude: 51.5,
@@ -32,10 +33,35 @@ describe('validateClientIntakeForm', () => {
     ).toMatch(/first name/i)
   })
 
-  it('requires at least one specialty', () => {
+  it('requires a specialty or Something else', () => {
     expect(
-      validateClientIntakeForm({ ...validClientValues, specialtyIds: [] }),
-    ).toMatch(/specialty/i)
+      validateClientIntakeForm({
+        ...validClientValues,
+        specialtyIds: [],
+        somethingElseSelected: false,
+      }),
+    ).toMatch(/something else/i)
+  })
+
+  it('accepts Something else with empty details and no specialty ids', () => {
+    expect(
+      validateClientIntakeForm({
+        ...validClientValues,
+        specialtyIds: [],
+        somethingElseSelected: true,
+        lookingForDetails: '',
+      }),
+    ).toBeNull()
+  })
+
+  it('rejects Something else combined with specialty ids', () => {
+    expect(
+      validateClientIntakeForm({
+        ...validClientValues,
+        specialtyIds: [1],
+        somethingElseSelected: true,
+      }),
+    ).toMatch(/cannot be combined/i)
   })
 
   it('rejects looking_for_details over the limit', () => {
@@ -52,5 +78,15 @@ describe('normalizeClientIntakePayload', () => {
     expect(payload.looking_for_details).toContain('lactation')
     expect(payload.email).toBe('jane@example.com')
     expect(payload.specialty_ids).toEqual([1])
+  })
+
+  it('sends empty specialty_ids when Something else is selected', () => {
+    const payload = normalizeClientIntakePayload({
+      ...validClientValues,
+      specialtyIds: [],
+      somethingElseSelected: true,
+      lookingForDetails: '',
+    })
+    expect(payload.specialty_ids).toEqual([])
   })
 })

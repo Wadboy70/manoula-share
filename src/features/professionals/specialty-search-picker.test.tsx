@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import { SpecialtySearchPicker } from './specialty-search-picker'
+import {
+  SOMETHING_ELSE_SPECIALTY_LABEL,
+  SpecialtySearchPicker,
+} from './specialty-search-picker'
 
 const OPTIONS = [
   { id: 1, label: 'Lactation Consultant' },
@@ -42,5 +45,64 @@ describe('SpecialtySearchPicker', () => {
 
     await user.click(screen.getByRole('button', { name: /remove doula/i }))
     expect(onChange).toHaveBeenCalledWith([])
+  })
+
+  it('shows Something else in the list when allowSomethingElse is enabled', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <SpecialtySearchPicker
+        options={OPTIONS}
+        value={[]}
+        onChange={vi.fn()}
+        allowSomethingElse
+        somethingElseSelected={false}
+        onSomethingElseChange={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('combobox'))
+    expect(
+      screen.getByRole('option', { name: SOMETHING_ELSE_SPECIALTY_LABEL }),
+    ).toBeInTheDocument()
+  })
+
+  it('selecting Something else clears specialty ids and shows pill', async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    const onSomethingElseChange = vi.fn()
+
+    render(
+      <SpecialtySearchPicker
+        options={OPTIONS}
+        value={[]}
+        onChange={onChange}
+        allowSomethingElse
+        somethingElseSelected={false}
+        onSomethingElseChange={onSomethingElseChange}
+      />,
+    )
+
+    await user.click(screen.getByRole('combobox'))
+    await user.click(screen.getByRole('option', { name: SOMETHING_ELSE_SPECIALTY_LABEL }))
+
+    expect(onSomethingElseChange).toHaveBeenCalledWith(true)
+    expect(onChange).toHaveBeenCalledWith([])
+  })
+
+  it('renders Something else pill when somethingElseSelected is true', () => {
+    render(
+      <SpecialtySearchPicker
+        options={OPTIONS}
+        value={[]}
+        onChange={vi.fn()}
+        allowSomethingElse
+        somethingElseSelected
+        onSomethingElseChange={vi.fn()}
+      />,
+    )
+
+    const list = screen.getByRole('list', { name: /selected specialties/i })
+    expect(within(list).getByText(SOMETHING_ELSE_SPECIALTY_LABEL)).toBeInTheDocument()
   })
 })

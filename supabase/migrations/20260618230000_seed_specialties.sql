@@ -4,7 +4,7 @@
 insert into public.specialties (slug, label)
 values
   ('lactation-support', 'Lactation support'),
-  ('postpartum-doula-care', 'Postpartum doula care'),
+  ('postpartum-doula-care', 'Doula care'),
   ('mental-health-therapy', 'Mental health & therapy'),
   ('pelvic-floor-physical-therapy', 'Pelvic floor & physical therapy'),
   ('sleep-infant-care', 'Sleep & infant care'),

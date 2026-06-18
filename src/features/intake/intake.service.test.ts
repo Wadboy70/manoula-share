@@ -16,6 +16,7 @@ const validValues: ClientIntakeFormValues = {
   lastName: 'Doe',
   email: 'jane@example.com',
   specialtyIds: [2],
+  somethingElseSelected: false,
   locationLabel: 'London, UK',
   placeId: 'place.london',
   latitude: 51.5,
@@ -40,6 +41,23 @@ describe('submitClientIntake', () => {
         email: 'jane@example.com',
         looking_for_details: 'Need evening virtual sessions.',
         specialty_ids: [2],
+      }),
+    })
+  })
+
+  it('submits empty specialty_ids when Something else is selected', async () => {
+    const result = await submitClientIntake({
+      ...validValues,
+      specialtyIds: [],
+      somethingElseSelected: true,
+      lookingForDetails: '',
+    })
+
+    expect(result).toEqual({ ok: true })
+    expect(rpcMock).toHaveBeenCalledWith('submit_client_intake', {
+      payload: expect.objectContaining({
+        specialty_ids: [],
+        looking_for_details: '',
       }),
     })
   })

@@ -18,6 +18,7 @@ const initialValues: ClientIntakeFormValues = {
   lastName: '',
   email: '',
   specialtyIds: [],
+  somethingElseSelected: false,
   locationLabel: '',
   placeId: '',
   latitude: null,
@@ -160,6 +161,15 @@ export function ClientIntakePage() {
             options={specialtyOptions}
             value={values.specialtyIds}
             onChange={(nextIds) => setValues((prev) => ({ ...prev, specialtyIds: nextIds }))}
+            allowSomethingElse
+            somethingElseSelected={values.somethingElseSelected}
+            onSomethingElseChange={(selected) =>
+              setValues((prev) => ({
+                ...prev,
+                somethingElseSelected: selected,
+                specialtyIds: selected ? [] : prev.specialtyIds,
+              }))
+            }
             disabled={specialtiesLoading}
           />
 
@@ -202,7 +212,11 @@ export function ClientIntakePage() {
             <Textarea
               id="client-looking-for"
               value={values.lookingForDetails}
-              placeholder="Share your stage of pregnancy or postpartum, timing, and any preferences for how you would like to receive support."
+              placeholder={
+                values.somethingElseSelected
+                  ? 'Tell us what kind of support you are looking for — timing, preferences, or anything else that would help us connect you.'
+                  : 'Share your stage of pregnancy or postpartum, timing, and any preferences for how you would like to receive support.'
+              }
               aria-invalid={detailsLengthError ? true : undefined}
               onChange={(event) =>
                 setValues((prev) => ({ ...prev, lookingForDetails: event.target.value }))

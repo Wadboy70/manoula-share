@@ -17,6 +17,7 @@ export type ClientIntakeFormValues = {
   lastName: string
   email: string
   specialtyIds: number[]
+  somethingElseSelected: boolean
   locationLabel: string
   placeId: string
   latitude: number | null
@@ -92,8 +93,12 @@ export function validateClientIntakeForm(values: ClientIntakeFormValues): string
   const emailError = validateEmail(values.email)
   if (emailError) return emailError
 
-  if (values.specialtyIds.length === 0) {
-    return 'Please select at least one specialty.'
+  if (values.somethingElseSelected) {
+    if (values.specialtyIds.length > 0) {
+      return 'Something else cannot be combined with other specialties.'
+    }
+  } else if (values.specialtyIds.length === 0) {
+    return 'Please select a specialty or choose Something else.'
   }
 
   const locationError = validateLocation(values.locationLabel, values.placeId)

@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
+export const SOMETHING_ELSE_SPECIALTY_LABEL = 'Something else'
+
 export type SpecialtyPickerOption = {
   id: number
   label: string
@@ -19,6 +21,9 @@ type SpecialtySearchPickerProps = {
   value: number[]
   onChange: (nextIds: number[]) => void
   disabled?: boolean
+  allowSomethingElse?: boolean
+  somethingElseSelected?: boolean
+  onSomethingElseChange?: (selected: boolean) => void
 }
 
 export function SpecialtySearchPicker({
@@ -29,6 +34,9 @@ export function SpecialtySearchPicker({
   value,
   onChange,
   disabled = false,
+  allowSomethingElse = false,
+  somethingElseSelected = false,
+  onSomethingElseChange,
 }: SpecialtySearchPickerProps) {
   const reactId = useId()
   const listboxId = idProp ?? `${reactId}-specialty-listbox`
@@ -47,6 +55,12 @@ export function SpecialtySearchPicker({
 
   const normalizedQuery = search.trim().toLowerCase()
 
+  const showSomethingElseInList =
+    allowSomethingElse &&
+    !somethingElseSelected &&
+    (normalizedQuery === '' ||
+      SOMETHING_ELSE_SPECIALTY_LABEL.toLowerCase().includes(normalizedQuery))
+
   const availableFiltered = useMemo(() => {
     const selectedSet = new Set(value)
     return options.filter((opt) => {
@@ -55,6 +69,8 @@ export function SpecialtySearchPicker({
       return opt.label.toLowerCase().includes(normalizedQuery)
     })
   }, [options, value, normalizedQuery])
+
+  const listIsEmpty = !showSomethingElseInList && availableFiltered.length === 0
 
   useEffect(() => {
     if (!open) return
@@ -79,13 +95,25 @@ export function SpecialtySearchPicker({
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [open])
 
+  const selectSomethingElse = useCallback(() => {
+    onSomethingElseChange?.(true)
+    onChange([])
+    setSearch('')
+    setOpen(false)
+  }, [onChange, onSomethingElseChange])
+
+  const clearSomethingElse = useCallback(() => {
+    onSomethingElseChange?.(false)
+  }, [onSomethingElseChange])
+
   const addSpecialty = useCallback(
     (specialtyId: number) => {
       if (value.includes(specialtyId)) return
+      onSomethingElseChange?.(false)
       onChange([...value, specialtyId])
       setSearch('')
     },
-    [value, onChange],
+    [value, onChange, onSomethingElseChange],
   )
 
   const removeSpecialty = useCallback(
@@ -133,7 +161,23 @@ export function SpecialtySearchPicker({
             role="listbox"
             className="border-input bg-background absolute z-[100] mt-1 max-h-60 w-full overflow-auto rounded-lg border py-1 shadow-md"
           >
-            {availableFiltered.length === 0 ? (
+            {showSomethingElseInList ? (
+              <li role="presentation">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={false}
+                  className="hover:bg-muted/80 focus:bg-muted/80 w-full px-3 py-2 text-left text-sm outline-none"
+                  onMouseDown={(event) => {
+                    event.preventDefault()
+                  }}
+                  onClick={selectSomethingElse}
+                >
+                  {SOMETHING_ELSE_SPECIALTY_LABEL}
+                </button>
+              </li>
+            ) : null}
+            {listIsEmpty ? (
               <li className="text-muted-foreground px-3 py-2 text-sm" role="presentation">
                 {normalizedQuery ? 'No matching specialties.' : 'All specialties are selected.'}
               </li>
@@ -159,7 +203,26 @@ export function SpecialtySearchPicker({
         ) : null}
       </div>
 
-      {selectedOrdered.length > 0 ? (
+      {somethingElseSelected ? (
+        <ul className="flex flex-wrap gap-2 pt-1" aria-label="Selected specialties">
+          <li>
+            <span className="border-foreground/15 bg-foreground/5 text-foreground inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-sm">
+              <span className="min-w-0 truncate">{SOMETHING_ELSE_SPECIALTY_LABEL}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                disabled={disabled}
+                className="text-muted-foreground hover:text-foreground shrink-0 rounded-full"
+                onClick={clearSomethingElse}
+                aria-label={`Remove ${SOMETHING_ELSE_SPECIALTY_LABEL}`}
+              >
+                <X className="size-3.5" aria-hidden />
+              </Button>
+            </span>
+          </li>
+        </ul>
+      ) : selectedOrdered.length > 0 ? (
         <ul className="flex flex-wrap gap-2 pt-1" aria-label="Selected specialties">
           {selectedOrdered.map((opt) => (
             <li key={opt.id}>
