@@ -17,6 +17,12 @@ do $$
 begin
   insert into public.specialties (slug, label)
   values
+    ('lactation-support', 'Lactation support'),
+    ('postpartum-doula-care', 'Postpartum doula care'),
+    ('mental-health-therapy', 'Mental health & therapy'),
+    ('pelvic-floor-physical-therapy', 'Pelvic floor & physical therapy'),
+    ('sleep-infant-care', 'Sleep & infant care'),
+    ('nutrition-wellness', 'Nutrition & wellness'),
     ('lactation-consultant', 'Lactation Consultant'),
     ('postpartum-doula', 'Postpartum Doula'),
     ('pelvic-floor-therapy', 'Pelvic Floor Therapy'),

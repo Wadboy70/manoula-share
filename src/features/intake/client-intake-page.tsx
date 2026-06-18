@@ -42,6 +42,9 @@ export function ClientIntakePage() {
       .then((rows) => {
         if (cancelled) return
         setSpecialtyOptions(rows)
+        if (rows.length === 0) {
+          setError('Specialties are unavailable right now. Please try again later.')
+        }
         setSpecialtiesLoading(false)
       })
       .catch(() => {
