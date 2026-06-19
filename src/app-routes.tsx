@@ -5,6 +5,8 @@ import {
   ProfessionalOnlyRoute,
   ProtectedRoute,
 } from '@/components/auth/protected-route'
+import { NotFoundTrigger } from '@/components/errors/not-found-trigger'
+import { RouteErrorPage } from '@/components/errors/route-error-page'
 import { prelaunchGuard } from '@/lib/prelaunch-guard'
 import { SiteChrome } from '@/components/site-chrome'
 import {
@@ -35,7 +37,7 @@ import { SignUpPage } from '@/pages/sign-up-page'
 
 /** Shared route tree for BrowserRouter (tests) and data routers (app + integration). */
 export const appRouteObjects = createRoutesFromElements(
-  <Route element={<SiteChrome />}>
+  <Route element={<SiteChrome />} errorElement={<RouteErrorPage />}>
     <Route index element={<HomePage />} />
     <Route path="find-support" element={<ClientIntakePage />} />
     <Route path="join" element={<ProfessionalIntakePage />} />
@@ -103,5 +105,6 @@ export const appRouteObjects = createRoutesFromElements(
         </AdminOnlyRoute>
       }
     />
+    <Route path="*" element={<NotFoundTrigger />} />
   </Route>,
 )
