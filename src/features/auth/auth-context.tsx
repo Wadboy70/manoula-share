@@ -45,7 +45,7 @@ function readMetadataCountryCode(user: User): string {
 }
 
 const USERS_APP_SELECT =
-  'id,created_at,auth_user_id,first_name,last_name,email,is_professional,profile_photo_url,bio,country_code'
+  'id,created_at,auth_user_id,first_name,last_name,email,is_professional,is_admin,profile_photo_url,bio,country_code'
 
 async function fetchAppUser(authUser: User): Promise<AppUser | null> {
   const { data: userRow, error } = await supabase

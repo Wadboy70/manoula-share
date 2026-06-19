@@ -133,6 +133,31 @@ function buildIntegrationSupabaseClient(): IntegrationSupabaseClient {
         }
         return { data: null, error: null }
       }
+      if (fn === 'list_admin_intake_leads') {
+        if (!store.usersRow?.is_admin) {
+          return { data: { ok: false, error: 'Forbidden' }, error: null }
+        }
+        return {
+          data: {
+            ok: true,
+            mothers: [
+              {
+                id: 10,
+                first_name: 'Lead',
+                last_name: 'Mother',
+                email: 'mother@example.com',
+                lead_status: 'prelaunch',
+                intake_submitted_at: '2026-06-20T10:00:00.000Z',
+                location_label: 'London, UK',
+                specialty_labels: ['Lactation support'],
+                looking_for_details: 'Evening help',
+              },
+            ],
+            professionals: [],
+          },
+          error: null,
+        }
+      }
       return { data: null, error: { message: `unknown rpc ${fn}` } }
     }),
     channel: vi.fn(() => ({
@@ -1324,5 +1349,39 @@ describe('integration: sign up', () => {
         }),
       }),
     )
+  })
+})
+
+describe('integration: admin intake leads', () => {
+  beforeEach(() => {
+    const user = makeAuthUser()
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({ is_admin: false, is_professional: false })
+    mockSb.store.profileRow = null
+  })
+
+  it('redirects non-admin users away from /admin', async () => {
+    renderWithApp(['/admin'])
+
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: /intake leads/i })).not.toBeInTheDocument()
+    })
+  })
+
+  it('lets admins view intake leads on /admin', async () => {
+    const user = makeAuthUser({ email: 'admin@example.com' })
+    mockSb.store.session = makeSession(user)
+    mockSb.store.usersRow = makeUsersRow({
+      is_admin: true,
+      is_professional: false,
+      auth_user_id: user.id,
+      email: 'admin@example.com',
+    })
+
+    renderWithApp(['/admin'])
+
+    expect(await screen.findByRole('heading', { name: /intake leads/i })).toBeInTheDocument()
+    expect(await screen.findByText('mother@example.com')).toBeInTheDocument()
+    expect(mockSb.rpc).toHaveBeenCalledWith('list_admin_intake_leads')
   })
 })

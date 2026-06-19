@@ -84,6 +84,11 @@ export function SignInPage() {
         return
       }
 
+      if (appUser.is_admin) {
+        navigate('/admin', { replace: true })
+        return
+      }
+
       navigate(appUser.is_professional ? '/dashboard' : '/search', { replace: true })
     } catch (err) {
       const message =

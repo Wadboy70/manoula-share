@@ -76,4 +76,20 @@ describe('integration: prelaunch routing', () => {
     })
     expect(screen.getByText(/location preferences/i)).toBeInTheDocument()
   })
+
+  it('renders sign-up at /signup during prelaunch', async () => {
+    renderWithApp(['/signup'])
+
+    await waitFor(() => {
+      expect(screen.getByText(/create an account/i)).toBeInTheDocument()
+    })
+  })
+
+  it('renders sign-in at /signin during prelaunch', async () => {
+    renderWithApp(['/signin'])
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument()
+    })
+  })
 })

@@ -43,6 +43,8 @@ export function AuthNavActions({
     return null
   }
 
+  const isAdmin = Boolean(appUser?.is_admin)
+
   const outlineLinkClass = cn(
     buttonVariants({ size: isSheet ? 'lg' : 'default', variant: 'outline' }),
     'rounded-none border-white/80 bg-transparent text-white hover:bg-white/10',
@@ -87,6 +89,16 @@ export function AuthNavActions({
     </Link>
   ) : null
 
+  const adminLink = session && isAdmin ? (
+    <Link
+      to="/admin"
+      className={outlineLinkClass}
+      onClick={() => afterNav(onAfterNavigate)}
+    >
+      Admin
+    </Link>
+  ) : null
+
   const bookingsLink =
     session && appUser && !appUser.is_professional ? (
       <Link
@@ -117,6 +129,7 @@ export function AuthNavActions({
     if (isSheet) {
       return (
         <div className="flex flex-col gap-3 px-4 pb-6">
+          {adminLink}
           {messagesLink}
           {bookingsLink}
           {professionalCta}
@@ -127,6 +140,9 @@ export function AuthNavActions({
 
     return (
       <div className="flex w-full max-w-lg flex-col gap-2 sm:mx-auto">
+        {adminLink ? (
+          <div className="flex min-h-11 w-full items-stretch">{adminLink}</div>
+        ) : null}
         {messagesLink ? (
           <div className="flex min-h-11 w-full items-stretch">{messagesLink}</div>
         ) : null}

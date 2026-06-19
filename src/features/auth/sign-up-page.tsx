@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabaseClient'
+import { isPrelaunchMode } from '@/lib/prelaunch'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/features/auth'
 
@@ -21,7 +22,7 @@ function fieldId(base: string) {
 
 export function SignUpPage() {
   const navigate = useNavigate()
-  const { session, loading: authLoading } = useAuth()
+  const { session, appUser, loading: authLoading } = useAuth()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -31,10 +32,17 @@ export function SignUpPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!authLoading && session) {
-      navigate('/professional/onboarding', { replace: true })
+    if (authLoading || !session || successMessage) return
+
+    if (isPrelaunchMode()) {
+      if (appUser?.is_admin) {
+        navigate('/admin', { replace: true })
+      }
+      return
     }
-  }, [authLoading, navigate, session])
+
+    navigate('/professional/onboarding', { replace: true })
+  }, [appUser?.is_admin, authLoading, navigate, session, successMessage])
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()

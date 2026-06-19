@@ -1,6 +1,7 @@
 import { createRoutesFromElements, Route } from 'react-router-dom'
 
 import {
+  AdminOnlyRoute,
   ProfessionalOnlyRoute,
   ProtectedRoute,
 } from '@/components/auth/protected-route'
@@ -15,6 +16,7 @@ import {
   DashboardAvailabilityPage,
 } from '@/pages/dashboard-page'
 import { DashboardBookingsPage } from '@/pages/dashboard-bookings-page'
+import { AdminIntakeLeadsPage } from '@/pages/admin-page'
 import { ClientIntakePage } from '@/pages/client-intake-page'
 import { ForgotPasswordPage } from '@/pages/forgot-password-page'
 import { HomePage } from '@/pages/home-page'
@@ -45,10 +47,10 @@ export const appRouteObjects = createRoutesFromElements(
         </ProtectedRoute>,
       )}
     />
-    <Route path="signup" element={prelaunchGuard(<SignUpPage />)} />
-    <Route path="signin" element={prelaunchGuard(<SignInPage />)} />
-    <Route path="forgot-password" element={prelaunchGuard(<ForgotPasswordPage />)} />
-    <Route path="reset-password" element={prelaunchGuard(<ResetPasswordPage />)} />
+    <Route path="signup" element={<SignUpPage />} />
+    <Route path="signin" element={<SignInPage />} />
+    <Route path="forgot-password" element={<ForgotPasswordPage />} />
+    <Route path="reset-password" element={<ResetPasswordPage />} />
     <Route path="search" element={prelaunchGuard(<SearchPage />)} />
     <Route
       path="professionals/:professionalId"
@@ -93,5 +95,13 @@ export const appRouteObjects = createRoutesFromElements(
       <Route path="availability" element={<DashboardAvailabilityPage />} />
       <Route path="settings" element={<DashboardSettingsPlaceholderPage />} />
     </Route>
+    <Route
+      path="admin"
+      element={
+        <AdminOnlyRoute>
+          <AdminIntakeLeadsPage />
+        </AdminOnlyRoute>
+      }
+    />
   </Route>,
 )

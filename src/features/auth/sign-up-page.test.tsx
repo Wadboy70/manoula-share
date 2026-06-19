@@ -5,12 +5,33 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import { SignUpPage } from '@/features/auth/sign-up-page'
 
-vi.mock('@/features/auth', () => ({
-  useAuth: () => ({
+const navigateMock = vi.hoisted(() => vi.fn())
+const isPrelaunchModeMock = vi.hoisted(() => vi.fn(() => false))
+const useAuthMock = vi.hoisted(() =>
+  vi.fn(() => ({
     session: null,
+    appUser: null,
     loading: false,
     loadAppUser: vi.fn(),
-  }),
+  })),
+)
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  }
+})
+
+vi.mock('@/lib/prelaunch', () => ({
+  isPrelaunchMode: isPrelaunchModeMock,
+  isPrelaunchPublicPath: () => false,
+  PRELAUNCH_PUBLIC_PATHS: ['/', '/find-support', '/join'],
+}))
+
+vi.mock('@/features/auth', () => ({
+  useAuth: useAuthMock,
 }))
 
 const authSignUpMock = vi.hoisted(() =>
@@ -46,6 +67,14 @@ describe('SignUpPage', () => {
   beforeEach(() => {
     authSignUpMock.mockReset()
     authSignUpMock.mockResolvedValue({ error: null })
+    navigateMock.mockReset()
+    isPrelaunchModeMock.mockReturnValue(false)
+    useAuthMock.mockReturnValue({
+      session: null,
+      appUser: null,
+      loading: false,
+      loadAppUser: vi.fn(),
+    })
   })
 
   it('shows validation when first name is empty', async () => {
@@ -99,5 +128,34 @@ describe('SignUpPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       /email already in use/i,
     )
+  })
+
+  it('does not redirect to onboarding during prelaunch when a session exists', () => {
+    isPrelaunchModeMock.mockReturnValue(true)
+    useAuthMock.mockReturnValue({
+      session: { user: { id: 'user-1' } } as never,
+      appUser: { is_admin: false, is_professional: false } as never,
+      loading: false,
+      loadAppUser: vi.fn(),
+    })
+
+    renderSignUp()
+
+    expect(screen.getByText(/create an account/i)).toBeInTheDocument()
+    expect(navigateMock).not.toHaveBeenCalled()
+  })
+
+  it('redirects admins to /admin during prelaunch when a session exists', () => {
+    isPrelaunchModeMock.mockReturnValue(true)
+    useAuthMock.mockReturnValue({
+      session: { user: { id: 'user-1' } } as never,
+      appUser: { is_admin: true, is_professional: false } as never,
+      loading: false,
+      loadAppUser: vi.fn(),
+    })
+
+    renderSignUp()
+
+    expect(navigateMock).toHaveBeenCalledWith('/admin', { replace: true })
   })
 })

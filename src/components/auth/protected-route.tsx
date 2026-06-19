@@ -47,3 +47,26 @@ export function ProfessionalOnlyRoute({
 
   return children
 }
+
+export function AdminOnlyRoute({ children }: { children: ReactNode }) {
+  const { appUser, loading, session } = useAuth()
+  const location = useLocation()
+
+  if (loading) {
+    return (
+      <div className="font-body flex min-h-svh items-center justify-center bg-[#1a1a1a] text-sm text-zinc-300">
+        Loading...
+      </div>
+    )
+  }
+
+  if (!session) {
+    return <Navigate to="/signin" state={{ from: location.pathname }} replace />
+  }
+
+  if (!appUser?.is_admin) {
+    return <Navigate to="/" replace />
+  }
+
+  return children
+}

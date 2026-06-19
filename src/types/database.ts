@@ -789,6 +789,7 @@ export type Database = {
           first_name: string | null
           id: number
           intake_submitted_at: string | null
+          is_admin: boolean
           is_professional: boolean | null
           last_name: string | null
           lead_status: string | null
@@ -803,6 +804,7 @@ export type Database = {
           first_name?: string | null
           id?: number
           intake_submitted_at?: string | null
+          is_admin?: boolean
           is_professional?: boolean | null
           last_name?: string | null
           lead_status?: string | null
@@ -817,6 +819,7 @@ export type Database = {
           first_name?: string | null
           id?: number
           intake_submitted_at?: string | null
+          is_admin?: boolean
           is_professional?: boolean | null
           last_name?: string | null
           lead_status?: string | null
@@ -848,6 +851,7 @@ export type Database = {
     }
     Functions: {
       app_user_id_for_auth: { Args: never; Returns: number }
+      app_user_is_admin: { Args: never; Returns: boolean }
       availability_slot_is_bookable: {
         Args: {
           p_duration_minutes: number
@@ -910,6 +914,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      list_admin_intake_leads: { Args: never; Returns: Json }
       submit_client_intake: { Args: { payload: Json }; Returns: Json }
       submit_professional_intake: { Args: { payload: Json }; Returns: Json }
       update_booking_status: {
