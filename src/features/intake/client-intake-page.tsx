@@ -9,6 +9,9 @@ import { LocationPicker } from '@/features/search/location-picker'
 import type { LocationSuggestion } from '@/features/search/location.types'
 import { fetchSearchSpecialtyOptions } from '@/features/search/specialties.service'
 
+import { CaptchaWidget } from '@/features/captcha/captcha-widget'
+import { useCaptcha } from '@/features/captcha/use-captcha'
+
 import { IntakeSuccessPanel } from './intake-success-panel'
 import { submitClientIntake } from './intake.service'
 import { INTAKE_LIMITS, type ClientIntakeFormValues } from './intake-validation'
@@ -36,6 +39,15 @@ export function ClientIntakePage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const {
+    captchaToken,
+    setCaptchaToken,
+    turnstileRef,
+    resetCaptcha,
+    validateCaptchaToken,
+    canSubmit,
+    enabled: captchaEnabled,
+  } = useCaptcha()
 
   useEffect(() => {
     let cancelled = false
@@ -76,11 +88,18 @@ export function ClientIntakePage() {
       return
     }
 
+    const captchaError = validateCaptchaToken()
+    if (captchaError) {
+      setError(captchaError)
+      return
+    }
+
     setSubmitting(true)
     try {
-      const result = await submitClientIntake(values)
+      const result = await submitClientIntake(values, captchaToken)
       if (!result.ok) {
         setError(result.error)
+        resetCaptcha()
         return
       }
       setSubmitted(true)
@@ -232,6 +251,10 @@ export function ClientIntakePage() {
             ) : null}
           </div>
 
+          {captchaEnabled ? (
+            <CaptchaWidget turnstileRef={turnstileRef} onTokenChange={setCaptchaToken} />
+          ) : null}
+
           {error ? (
             <p className="text-destructive text-sm" role="alert">
               {error}
@@ -242,7 +265,9 @@ export function ClientIntakePage() {
             type="submit"
             size="lg"
             className="w-full rounded-none bg-[#e5e5e5] text-black hover:bg-white sm:w-auto"
-            disabled={submitting || specialtiesLoading || Boolean(detailsLengthError)}
+            disabled={
+              submitting || specialtiesLoading || Boolean(detailsLengthError) || !canSubmit
+            }
           >
             {submitting ? 'Submitting…' : 'Submit'}
           </Button>

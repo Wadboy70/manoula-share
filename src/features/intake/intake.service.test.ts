@@ -1,13 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { CAPTCHA_REQUIRED_ERROR } from '@/features/captcha/captcha-config'
 import { submitClientIntake } from '@/features/intake/intake.service'
 import type { ClientIntakeFormValues } from '@/features/intake/intake-validation'
 
-const rpcMock = vi.hoisted(() => vi.fn())
+const invokeMock = vi.hoisted(() => vi.fn())
 
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
-    rpc: rpcMock,
+    functions: {
+      invoke: invokeMock,
+    },
   },
 }))
 
@@ -28,20 +31,25 @@ const validValues: ClientIntakeFormValues = {
 
 describe('submitClientIntake', () => {
   beforeEach(() => {
-    rpcMock.mockReset()
-    rpcMock.mockResolvedValue({ data: { ok: true }, error: null })
+    invokeMock.mockReset()
+    invokeMock.mockResolvedValue({ data: { ok: true }, error: null })
+    vi.stubEnv('VITE_CAPTCHA_ENABLED', 'false')
+    vi.stubEnv('VITE_CAPTCHA_SITE_KEY', '')
   })
 
-  it('calls submit_client_intake with normalized payload', async () => {
+  it('calls submit-intake with normalized payload', async () => {
     const result = await submitClientIntake(validValues)
 
     expect(result).toEqual({ ok: true })
-    expect(rpcMock).toHaveBeenCalledWith('submit_client_intake', {
-      payload: expect.objectContaining({
-        email: 'jane@example.com',
-        looking_for_details: 'Need evening virtual sessions.',
-        specialty_ids: [2],
-      }),
+    expect(invokeMock).toHaveBeenCalledWith('submit-intake', {
+      body: {
+        kind: 'client',
+        payload: expect.objectContaining({
+          email: 'jane@example.com',
+          looking_for_details: 'Need evening virtual sessions.',
+          specialty_ids: [2],
+        }),
+      },
     })
   })
 
@@ -54,16 +62,52 @@ describe('submitClientIntake', () => {
     })
 
     expect(result).toEqual({ ok: true })
-    expect(rpcMock).toHaveBeenCalledWith('submit_client_intake', {
-      payload: expect.objectContaining({
-        specialty_ids: [],
-        looking_for_details: '',
-      }),
+    expect(invokeMock).toHaveBeenCalledWith('submit-intake', {
+      body: {
+        kind: 'client',
+        payload: expect.objectContaining({
+          specialty_ids: [],
+          looking_for_details: '',
+        }),
+      },
     })
   })
 
-  it('returns server error message from RPC body', async () => {
-    rpcMock.mockResolvedValue({
+  it('passes captchaToken when captcha is enabled', async () => {
+    vi.stubEnv('VITE_CAPTCHA_ENABLED', 'true')
+    vi.stubEnv('VITE_CAPTCHA_SITE_KEY', 'test-site-key')
+
+    const result = await submitClientIntake(validValues, 'captcha-token-123')
+
+    expect(result).toEqual({ ok: true })
+    expect(invokeMock).toHaveBeenCalledWith('submit-intake', {
+      body: expect.objectContaining({
+        kind: 'client',
+        captchaToken: 'captcha-token-123',
+      }),
+    })
+
+    vi.unstubAllEnvs()
+    vi.stubEnv('VITE_CAPTCHA_ENABLED', 'false')
+    vi.stubEnv('VITE_CAPTCHA_SITE_KEY', '')
+  })
+
+  it('requires captchaToken when captcha is enabled', async () => {
+    vi.stubEnv('VITE_CAPTCHA_ENABLED', 'true')
+    vi.stubEnv('VITE_CAPTCHA_SITE_KEY', 'test-site-key')
+
+    const result = await submitClientIntake(validValues)
+
+    expect(result).toEqual({ ok: false, error: CAPTCHA_REQUIRED_ERROR })
+    expect(invokeMock).not.toHaveBeenCalled()
+
+    vi.unstubAllEnvs()
+    vi.stubEnv('VITE_CAPTCHA_ENABLED', 'false')
+    vi.stubEnv('VITE_CAPTCHA_SITE_KEY', '')
+  })
+
+  it('returns server error message from invoke body', async () => {
+    invokeMock.mockResolvedValue({
       data: { ok: false, error: 'This email is already registered.' },
       error: null,
     })
@@ -75,9 +119,9 @@ describe('submitClientIntake', () => {
     })
   })
 
-  it('returns validation error without calling RPC', async () => {
+  it('returns validation error without calling submit-intake', async () => {
     const result = await submitClientIntake({ ...validValues, firstName: '' })
     expect(result.ok).toBe(false)
-    expect(rpcMock).not.toHaveBeenCalled()
+    expect(invokeMock).not.toHaveBeenCalled()
   })
 })

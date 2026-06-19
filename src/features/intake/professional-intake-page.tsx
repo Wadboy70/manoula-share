@@ -10,6 +10,9 @@ import { LocationPicker } from '@/features/search/location-picker'
 import type { LocationSuggestion } from '@/features/search/location.types'
 import { fetchSearchSpecialtyOptions } from '@/features/search/specialties.service'
 
+import { CaptchaWidget } from '@/features/captcha/captcha-widget'
+import { useCaptcha } from '@/features/captcha/use-captcha'
+
 import { IntakeSuccessPanel } from './intake-success-panel'
 import { submitProfessionalIntake } from './intake.service'
 import type { ProfessionalIntakeFormValues } from './intake-validation'
@@ -50,6 +53,15 @@ export function ProfessionalIntakePage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const {
+    captchaToken,
+    setCaptchaToken,
+    turnstileRef,
+    resetCaptcha,
+    validateCaptchaToken,
+    canSubmit,
+    enabled: captchaEnabled,
+  } = useCaptcha()
 
   useEffect(() => {
     let cancelled = false
@@ -81,16 +93,26 @@ export function ProfessionalIntakePage() {
       return
     }
 
+    const captchaError = validateCaptchaToken()
+    if (captchaError) {
+      setError(captchaError)
+      return
+    }
+
     setSubmitting(true)
     try {
-      const result = await submitProfessionalIntake({
-        ...values,
-        credentialType: credential.credentialType,
-        issuingBody: credential.issuingBody,
-        registrationNumber: credential.registrationNumber,
-      })
+      const result = await submitProfessionalIntake(
+        {
+          ...values,
+          credentialType: credential.credentialType,
+          issuingBody: credential.issuingBody,
+          registrationNumber: credential.registrationNumber,
+        },
+        captchaToken,
+      )
       if (!result.ok) {
         setError(result.error)
+        resetCaptcha()
         return
       }
       setSubmitted(true)
@@ -253,6 +275,10 @@ export function ProfessionalIntakePage() {
             <ProfileStepCredentialFields credential={credential} onChange={setCredential} />
           </div>
 
+          {captchaEnabled ? (
+            <CaptchaWidget turnstileRef={turnstileRef} onTokenChange={setCaptchaToken} />
+          ) : null}
+
           {error ? (
             <p className="text-destructive text-sm" role="alert">
               {error}
@@ -263,7 +289,7 @@ export function ProfessionalIntakePage() {
             type="submit"
             size="lg"
             className="w-full rounded-none bg-[#e5e5e5] text-black hover:bg-white sm:w-auto"
-            disabled={submitting || specialtiesLoading}
+            disabled={submitting || specialtiesLoading || !canSubmit}
           >
             {submitting ? 'Submitting…' : 'Submit'}
           </Button>

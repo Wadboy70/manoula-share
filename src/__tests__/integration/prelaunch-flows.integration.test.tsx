@@ -66,6 +66,7 @@ describe('integration: prelaunch routing', () => {
       expect(screen.getByRole('heading', { name: /^find support$/i })).toBeInTheDocument()
     })
     expect(screen.getByLabelText(/what are you looking for/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^submit$/i })).not.toBeDisabled()
   })
 
   it('renders the professional intake page at /join', async () => {
