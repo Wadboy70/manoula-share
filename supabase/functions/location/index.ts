@@ -1,8 +1,6 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import '@supabase/functions-js/edge-runtime.d.ts'
 
-import { createClient } from '@supabase/supabase-js'
-
 const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -168,24 +166,11 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Method not allowed' }, 405)
   }
 
+  // Gateway verify_jwt already accepts anon or user JWTs. Do not require a logged-in
+  // user — public intake forms (/find-support, /join) call this anonymously.
   const authHeader = req.headers.get('Authorization')
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return jsonResponse({ error: 'Missing or invalid Authorization header' }, 401)
-  }
-
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return jsonResponse({ error: 'Server configuration error' }, 500)
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: authHeader } },
-  })
-
-  const { data: userData, error: userError } = await supabase.auth.getUser()
-  if (userError || !userData.user) {
-    return jsonResponse({ error: 'Unauthorized' }, 401)
   }
 
   let body: unknown = {}
